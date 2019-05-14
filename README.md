@@ -5,7 +5,7 @@ At this time the code is not finished, the elevator has a simple life cycle and 
 
 ***need to disable elevator to see button functionality at this time**
 
-Buttons are working, and button presses will result in serial output stating which floor button was pressed, along with floor LED and display. The elevator simulation takes over the serial output from pushing buttons, so you need to disable it to see this funtionality.
+Buttons are working, and button presses will result in serial output stating which floor button was pressed, along with floor LED and display. The elevator simulation takes over this output from pushing buttons, so you need to disable it to see this funtionality.
 
 To disable elevator life cycle, comment out this line in elevator_main.ino file :     "#define ELEVATOR_LIVE"
 
