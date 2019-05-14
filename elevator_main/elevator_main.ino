@@ -9,11 +9,10 @@
 ////****FOR DEBUGGING***//
 #define DEBUG_MAIN 
 #define SERIAL_BAUD 115200 
-//comment this out if you dont want the elevator simulation running
-//for example if you wanted to test the LED and Display w/button presses
-#define ELEVATOR_LIVE
+
 ////****FOR MAIN***//
 #define NUM_OF_FLOORS 5 
+#define DELAY_INTERVAL 4000
 
 //controller file is currently doing a lot of heavy lifting because its keeps the main loop code cleaner
 //most of that code will eventually be delegated somewhere else or reconstructed in a better way
@@ -21,18 +20,16 @@
 //controller will get called/used thru this file. For now this file declares main objects and some
 //simple functions, then it helps set up objectsand finally runs the main Arduino loop
 
-////****declares main objects that will be used in Ardunio loop***//
+////****declares stuff that will be used in Ardunio loop***//
+//this is used for throttling elevator update
+unsigned long previousMillis=0;
 Buttons *buttons;
-#ifdef ELEVATOR_LIVE
-    Elevator *elevator;
-#endif
+Elevator *elevator;
 
 ////****functions to set up objects before going into the loop***/
 void setupElevator(uint8_t aNumofFloors)
 {
-  #ifdef ELEVATOR_LIVE
     elevator = new Elevator(aNumofFloors);
-  #endif
 }
 
 void setupButtons() 
@@ -61,9 +58,7 @@ void setup()
   setUpSerial(); 
   ////****set up all the sub-systems***//  
   ////****these functions are in this file***//
-  #ifdef ELEVATOR_LIVE
-    setupElevator(NUM_OF_FLOORS);
-  #endif
+  setupElevator(NUM_OF_FLOORS);
   setupButtons();  
   ////*******this function is found in digital.h***//
   setUpDigital();  
@@ -73,12 +68,15 @@ void setup()
 
 void loop() 
 {
-    ////****these functions are currently found in controller.h***//
-    checkButtons(NUM_OF_FLOORS,buttons);
-    #ifdef ELEVATOR_LIVE
-        updateElevator(elevator);
-    #endif
-    ////****this function is found in buttons.h***//
-    buttons->callEveryLoop();       
+  //this is how we throttle the elevator update so 
+  //the program has a chance to get button presses
+  unsigned long currentMillis = millis();    
+  if ((unsigned long)(currentMillis - previousMillis) >= DELAY_INTERVAL) 
+  {
+    updateElevator(elevator);
+    previousMillis = currentMillis;
+  } 
+  buttons->callEveryLoop();
+  checkButtons(NUM_OF_FLOORS,buttons);       
 }
 

@@ -1,6 +1,8 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#define DEBUG_CONTROLLER
+
 //this file "controller.h" is currently doing a lot of heavy lifting because its keeps the main loop code cleaner
 //most of this code will eventually be delegated somewhere else or reconstructed in a better way
 //possibly controller will eventually hold all the objects(elevator,buttons,light,digital) and then
@@ -9,6 +11,8 @@
 //these functions are mostly prototypes and will either be redone or there just for testing/development
 //for eaxmple passing in objects (elevator for example) because its quicker and easier, when I should be
 //passing there information as arguments, which I will change/fix after more functinality is working as intended
+
+long count = 0;
 
 //show user thru LED and Digital Display
 void showCurrentFloor(uint8_t aNum)
@@ -27,8 +31,9 @@ void goUpFloor(Elevator *aElevator)
     {
       aElevator->increaseCurrentFloor();
       showCurrentFloor(aElevator->getCurrentFloor());
-      Serial.println("Show Floor "+String(aElevator->getCurrentFloor())+" with led and number!");
-      delay(2000);
+      #ifdef DEBUG_CONTROLLER
+        Serial.println("Show Floor "+String(aElevator->getCurrentFloor())+" with led and number!");
+      #endif
     }
     else
     {
@@ -43,8 +48,9 @@ void goDownFloor(Elevator *aElevator)
     {
       aElevator->decreaseCurrentFloor();
       showCurrentFloor(aElevator->getCurrentFloor());
-      Serial.println("Show Floor "+String(aElevator->getCurrentFloor())+" with led and number!");
-      delay(2000);
+      #ifdef DEBUG_CONTROLLER
+        Serial.println("Show Floor "+String(aElevator->getCurrentFloor())+" with led and number!");
+      #endif
     }
     else
     {
@@ -59,16 +65,17 @@ void checkForTarget(Elevator *aElevator)
 {
   if (aElevator->targetFloor > aElevator->getCurrentFloor())
   {
-    Serial.println("we need to go up");
     aElevator->setState(GOING_UP);
   }
-  if (aElevator->targetFloor < aElevator->getCurrentFloor())
+  else if (aElevator->targetFloor < aElevator->getCurrentFloor())
   {
-    Serial.println("we need to go down");
     aElevator->setState(GOING_DOWN);
-  }  
+  }
+  else
+  {
+      aElevator->setState(NOT_IN_USE);
+  }
 }
-
 
 //this function/switch is like a lifecycle for the elevator in which its state dictates what it should be doing
 //this is where it will be told to go up,down,check que,calculate a new taget floor, display current floor
@@ -82,32 +89,42 @@ void updateElevator(Elevator *aElevator)
   switch(aElevator->getState())
   {
     case NOT_IN_USE:
-      Serial.println("NOT IN USE");
+      #ifdef DEBUG_CONTROLLER
+        Serial.println("NOT IN USE");
+      #endif
       showCurrentFloor(aElevator->getCurrentFloor());
-      //random us temp use and will eventually be replaced by a que
+      //random us temp use and will eventually be replaced by a que like thingy
       randNumber = random(1, 6);
-      Serial.println("Elevator new Target is "+String(randNumber));
-      Serial.println("Elevator current floor is "+String(aElevator->getCurrentFloor()));
+      #ifdef DEBUG_CONTROLLER
+        Serial.println("Elevator current floor is "+String(aElevator->getCurrentFloor()));
+      #endif
       aElevator->targetFloor = randNumber;      
-      delay(2000);
-      //temp check elevator que
-      checkForTarget(aElevator);     
+      aElevator->setState(PICK_TARGET_FLOOR);    
       break;
     case GOING_UP:
-      Serial.println("GOING UP"); 
+      #ifdef DEBUG_CONTROLLER
+        Serial.println("GOING UP");
+      #endif 
       goUpFloor(aElevator); 
       break;
     case GOING_DOWN:
-      Serial.println("GOING DOWN");
+      #ifdef DEBUG_CONTROLLER
+        Serial.println("GOING DOWN");
+      #endif
       goDownFloor(aElevator);    
       break;
     case PICK_TARGET_FLOOR:
-      Serial.println("PICKING TARGET FLOOR");
+      #ifdef DEBUG_CONTROLLER
+        Serial.println("PICKING TARGET FLOOR");
+        Serial.println("Elevator new Target is "+String(aElevator->targetFloor));
+      #endif
+      checkForTarget(aElevator);
       break;
     case TARGET_REACHED:
-      Serial.println("TARGET REACHED");
+      #ifdef DEBUG_CONTROLLER
+        Serial.println("TARGET REACHED");
+      #endif
       //if no new target for now goto not in use
-      delay(2000);
       aElevator->setState(NOT_IN_USE);
       break;
     default:
@@ -165,24 +182,25 @@ void checkButtons(uint8_t aNumOfFloors,Buttons *aButtons)
     uint8_t action = aButtons->getButtonAction(i);
     if (action != None) 
     {
-      Serial.print("Button ");
-      Serial.print(i);
+      //Serial.print("Button ");
+      //Serial.print(i);
       switch (action) 
       {
         case Up:
-          Serial.println(" Up!");
+          //Serial.println(" Up!");
           break;
         case Down:
-          Serial.println(" Down!");
-          //function that shows what button is pressed
-          //mainly for development and will not be used in this way for final version
-          showFloorNum(i);
-          //function call for que update eventaully here instead of showFloorNum
+          count++;
+          #ifdef DEBUG_CONTROLLER
+            Serial.println("button "+String(i)+" Down!");
+            Serial.println("the count is "+String(count));
+          #endif
+          //function call to add button to a que will go here
           break;
         default:
-          Serial.print(": ");
-          Serial.print(action);
-          Serial.println(": Huh?");
+          //Serial.print(": ");
+          //Serial.print(action);
+          //Serial.println(": Huh?");
           break;
       }
     }
@@ -200,4 +218,17 @@ void checkButtons(uint8_t aNumOfFloors,Buttons *aButtons)
   //Serial.println("getButtons function");
   //return buttons;
 //}
+
+/* 
+    #ifdef ELEVATOR_LIVE
+        updateElevator(elevator);
+      #endif
+    for(int i =0;i < 1000;i++)
+    {
+      buttons->callEveryLoop();
+      checkButtons(NUM_OF_FLOORS,buttons);
+       
+      delay(1);
+    }
+    */
 
