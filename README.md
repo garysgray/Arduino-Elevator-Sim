@@ -3,11 +3,7 @@ Arduino Elevator Sim : This is mainly code for a work in progress project with s
 
 At this time the code is not finished, the elevator has a simple life cycle and if run, the elevator will be given random floors and one can watch the elevator go "up and down" from the digiatal display and LED's indicating floors reached/passed. One can also use the serial output to follow along. At this time button presses do not tell elevator which floor to go to, buttons will seem unresponsive.
 
-***need to disable elevator to see button functionality at this time**
-
-Buttons are working, and button presses will result in serial output stating which floor button was pressed, along with floor LED and display. At this time the elevator simulation takes over the buttons output, so for now you need to disable the elevator to see the buttons funtionality.
-
-To disable elevator life cycle, comment out this line in elevator_main.ino file :     "#define ELEVATOR_LIVE"
+Added code to help throttle the elevator update now one can see results of pushing buttons (in serial ouptu) while elevator is running 
 
 Where to find diagrams:
 
