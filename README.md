@@ -1,7 +1,7 @@
 # Arduino-Elevator-Sim
 Arduino Elevator Sim : This is mainly code for a work in progress project with some links and pdf to tutorials that helped get this together so far.
 
-At this time the code is not finished, the elevator has a simple life cycle and if run the elevator will be given random floors and one can watch the elevator go "up and down" from the digiatal display and led's indicating floors reached/passed. one can also use the serial output to follow along.
+At this time the code is not finished, the elevator has a simple life cycle and if run, the elevator will be given random floors and one can watch the elevator go "up and down" from the digiatal display and led's indicating floors reached/passed. One can also use the serial output to follow along. At this time button presses do not tell elevator which floor to go to, buttons will seem unresponsive.
 
 ***need to disable elevator to see button functionality at this time**
 
