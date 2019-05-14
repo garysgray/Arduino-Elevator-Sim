@@ -6,7 +6,8 @@ At this time the code is not finished, the elevator has a simple life cycle and 
 ***need to disable elevator to see button functionality at this time**
 Buttons are working, and button presses will result in serial output stating which floor button was pressed, along with floor LED and display. The elevator simulation takes over the serial output from pushing buttons, so you need to disable it comment out this line in elevator_main.ino: #define ELEVATOR_LIVE
 
-Where to find diagrams
+Where to find diagrams,
+
 BUTTONS : https://www.instructables.com/id/Driving-Dozens-of-Buttons/,
 
 LED     : in included PDF lesson: 16 pg: 109,
