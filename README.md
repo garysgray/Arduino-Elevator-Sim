@@ -5,6 +5,10 @@ At this time the code is not finished, the elevator has a simple life cycle and 
 
 Added code to help throttle the elevator update now one can see results of pushing buttons (in serial ouptu) while elevator is running 
 
+5/15/19
+update: life cycle is better and now user can press buttons and go to floors. its to simple and needs some adjustments to picking the right order of floors to target.
+random floor s taken out no longer neede. button presses get added to "queue"
+
 Where to find diagrams:
 
 BUTTONS : https://www.instructables.com/id/Driving-Dozens-of-Buttons/,
