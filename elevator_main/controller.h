@@ -32,22 +32,56 @@ void addFloorRequest(uint8_t buttonNum)
 {
   buttonInfo[buttonNum].buttonState = true;  
 }
-
+void showDoorOpen(uint8_t currentFloor)
+{
+  //the door LED is 0 when door open show both door and floor LED's
+    comboLight(0,currentFloor);
+    delay(3000);
+    updateLightShiftRegister(currentFloor); 
+    delay(1000);
+}
 //this will be called from the elevator update function
 //for now it gets called when elevator is in NOT IN USE state
 //this is very simple for now but will have to make it better
-uint8_t getfloorRequest()
+uint8_t getfloorRequest(uint8_t aCurrentFloor)
 {
+  uint8_t biggest = 0;
+  uint8_t bigIndex = 0;
+  bool aHit = false;
   for(uint8_t i =0; i < numOfFloors;i++)
   {
     if(buttonInfo[i].buttonState == true) 
     {
-      buttonInfo[i].buttonState = false;
-      return ++i;
+      uint8_t temp = i;
+      if(++temp == aCurrentFloor)
+      {
+        buttonInfo[i].buttonState = false;
+        showDoorOpen(aCurrentFloor);
+        return aCurrentFloor;
+      }
+      aHit = true;
+      uint8_t tempFloorNum = i;
+      tempFloorNum++;
+      uint8_t distance = abs(aCurrentFloor-tempFloorNum);
+      Serial.println("SHOW distance "+String(distance));
+      if(distance > biggest)
+      {
+        biggest = distance;
+        bigIndex = i;  
+      }
     }
   }
-  //this is so if no buttons get pushed it goes back to floor 1
-  return 1;
+  if(aHit ==true && biggest != 0)
+  {
+    buttonInfo[bigIndex].buttonState = false;
+    bigIndex++;
+    return bigIndex;
+  }
+  else
+  {
+    return aCurrentFloor;
+  }
+  
 }
 
 //show user thru LED and Digital Display
@@ -59,6 +93,22 @@ void showCurrentFloor(uint8_t aNum)
   updateLightShiftRegister(aNum);
 }
 
+
+//little hacky here comboLight function needs a little explaing from lights.j
+//using delay not good temp need to use millis 
+void floorCheck(uint8_t currentFloor)
+{ 
+  if(buttonInfo[currentFloor-1].buttonState == true)
+  {
+    Serial.println("STOP AT FLOOR "+String(currentFloor));
+    showDoorOpen(currentFloor);
+    buttonInfo[currentFloor-1].buttonState = false;
+    
+  }
+}
+
+
+
 //function that will simulate elevator going up
 void goUpFloor(Elevator *aElevator)
 //this is still work in progress
@@ -67,8 +117,10 @@ void goUpFloor(Elevator *aElevator)
     {
       aElevator->increaseCurrentFloor();
       showCurrentFloor(aElevator->getCurrentFloor());
+      floorCheck(aElevator->getCurrentFloor());
       #ifdef DEBUG_CONTROLLER
         Serial.println("SHOW FLOOR "+String(aElevator->getCurrentFloor())+"LED + #");
+        
       #endif
     }
     else
@@ -84,6 +136,7 @@ void goDownFloor(Elevator *aElevator)
     {
       aElevator->decreaseCurrentFloor();
       showCurrentFloor(aElevator->getCurrentFloor());
+      floorCheck(aElevator->getCurrentFloor());
       #ifdef DEBUG_CONTROLLER
         Serial.println("SHOW FLOOR "+String(aElevator->getCurrentFloor())+"LED + #");
       #endif
@@ -126,8 +179,12 @@ void updateElevator(Elevator *aElevator)
   {
     case NOT_IN_USE:
       showCurrentFloor(aElevator->getCurrentFloor());
-      aElevator->targetFloor = getfloorRequest();
-      aElevator->setState(PICK_TARGET_FLOOR); 
+      aElevator->targetFloor = getfloorRequest(aElevator->getCurrentFloor());
+      //if(aElevator->targetFloor != aElevator->getCurrentFloor())
+      //{
+        aElevator->setState(PICK_TARGET_FLOOR);
+      //}
+       
       #ifdef DEBUG_CONTROLLER
         Serial.println("NOT IN USE");
         Serial.println("CURRENT FLOOR is "+String(aElevator->getCurrentFloor()));
@@ -145,6 +202,11 @@ void updateElevator(Elevator *aElevator)
       #endif
       goDownFloor(aElevator);    
       break;
+    case FLOOR_CHANGE:
+      #ifdef DEBUG_CONTROLLER
+        Serial.println("FLOOR CHANGE");
+      #endif
+      break;
     case PICK_TARGET_FLOOR:
       #ifdef DEBUG_CONTROLLER
         Serial.println("PICKING TARGET FLOOR");
@@ -152,9 +214,11 @@ void updateElevator(Elevator *aElevator)
       #endif
       checkForTarget(aElevator);
       break;
+      
     case TARGET_REACHED:
       #ifdef DEBUG_CONTROLLER
         Serial.println("TARGET REACHED");
+        showDoorOpen(aElevator->getCurrentFloor());
       #endif
       //if no new target for now goto not in use
       aElevator->setState(NOT_IN_USE);
@@ -187,7 +251,7 @@ void checkButtons(uint8_t aNumOfFloors,Buttons *aButtons)
         case Down:
           count++;
           #ifdef DEBUG_CONTROLLER
-            Serial.println("button "+String(i)+" Down!");
+            Serial.println("button "+String(i+1)+" Down!");
             Serial.println("the count is "+String(count));
           #endif          
           addFloorRequest(i);

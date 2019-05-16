@@ -27,7 +27,15 @@ void updateLightShiftRegister(byte digit)
    shiftOut(LIGHTS_DATA_PIN, LIGHTS_CLOCK_PIN, LSBFIRST, lightsArray[digit]);
    digitalWrite(LIGHTS_LATCH_PIN, HIGH);
 }
-
+void comboLight(uint8_t bit1,uint8_t bit2)
+{
+  byte bitBuffer = 0;
+  bitWrite(bitBuffer, abs(bit1-7), HIGH);
+  bitWrite(bitBuffer, abs(bit2-7), HIGH);
+  digitalWrite(LIGHTS_LATCH_PIN, LOW);
+  shiftOut(LIGHTS_DATA_PIN, LIGHTS_CLOCK_PIN, LSBFIRST, bitBuffer);
+  digitalWrite(LIGHTS_LATCH_PIN, HIGH);
+}
 void setUpLights() 
 {
   pinMode(LIGHTS_LATCH_PIN, OUTPUT);
