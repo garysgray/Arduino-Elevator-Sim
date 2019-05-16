@@ -9,6 +9,9 @@ Added code to help throttle the elevator update now one can see results of pushi
 update: life cycle is better and now user can press buttons and go to floors. its to simple and needs some adjustments to picking the right order of floors to target.
 random floor s taken out no longer neede. button presses get added to "queue"
 
+5/16/19
+update: got the elevator working much more like a real elevator, just have to clean up code and then start fine tuning stuff
+
 Where to find diagrams:
 
 BUTTONS : https://www.instructables.com/id/Driving-Dozens-of-Buttons/,
