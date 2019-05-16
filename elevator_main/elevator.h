@@ -49,7 +49,7 @@ Elevator::Elevator(uint8_t aNumFloors)
     numFloors = aNumFloors;
     elevatorState = NOT_IN_USE;
     currentFloor = 1;
-    targetFloor = 0;
+    targetFloor = 1;
     //buttons = new Buttons(NUM_BUTTONS, INPUT_PIN, LATCH_PIN, DATA_PIN, CLOCK_PIN);
     Serial.println("Constructor of Elevator called.");   
 }

@@ -12,7 +12,43 @@
 //for eaxmple passing in objects (elevator for example) because its quicker and easier, when I should be
 //passing there information as arguments, which I will change/fix after more functinality is working as intended
 
+//holds info abut what button was pushed
+typedef struct InputHolder 
+{
+  bool buttonState;
+  uint8_t buttonNum;
+  long timeStamp;  
+} InputHolder;
+
+InputHolder buttonInfo[8];
 long count = 0;
+//temp way of doing this
+uint8_t numOfFloors = 5;
+
+//this gets called when user presses button in check buttons function
+//will prob pass in a timestamp as well
+//also pass in the button number
+void addFloorRequest(uint8_t buttonNum)
+{
+  buttonInfo[buttonNum].buttonState = true;  
+}
+
+//this will be called from the elevator update function
+//for now it gets called when elevator is in NOT IN USE state
+//this is very simple for now but will have to make it better
+uint8_t getfloorRequest()
+{
+  for(uint8_t i =0; i < numOfFloors;i++)
+  {
+    if(buttonInfo[i].buttonState == true) 
+    {
+      buttonInfo[i].buttonState = false;
+      return ++i;
+    }
+  }
+  //this is so if no buttons get pushed it goes back to floor 1
+  return 1;
+}
 
 //show user thru LED and Digital Display
 void showCurrentFloor(uint8_t aNum)
@@ -32,7 +68,7 @@ void goUpFloor(Elevator *aElevator)
       aElevator->increaseCurrentFloor();
       showCurrentFloor(aElevator->getCurrentFloor());
       #ifdef DEBUG_CONTROLLER
-        Serial.println("Show Floor "+String(aElevator->getCurrentFloor())+" with led and number!");
+        Serial.println("SHOW FLOOR "+String(aElevator->getCurrentFloor())+"LED + #");
       #endif
     }
     else
@@ -49,7 +85,7 @@ void goDownFloor(Elevator *aElevator)
       aElevator->decreaseCurrentFloor();
       showCurrentFloor(aElevator->getCurrentFloor());
       #ifdef DEBUG_CONTROLLER
-        Serial.println("Show Floor "+String(aElevator->getCurrentFloor())+" with led and number!");
+        Serial.println("SHOW FLOOR "+String(aElevator->getCurrentFloor())+"LED + #");
       #endif
     }
     else
@@ -89,17 +125,13 @@ void updateElevator(Elevator *aElevator)
   switch(aElevator->getState())
   {
     case NOT_IN_USE:
+      showCurrentFloor(aElevator->getCurrentFloor());
+      aElevator->targetFloor = getfloorRequest();
+      aElevator->setState(PICK_TARGET_FLOOR); 
       #ifdef DEBUG_CONTROLLER
         Serial.println("NOT IN USE");
-      #endif
-      showCurrentFloor(aElevator->getCurrentFloor());
-      //random us temp use and will eventually be replaced by a que like thingy
-      randNumber = random(1, 6);
-      #ifdef DEBUG_CONTROLLER
-        Serial.println("Elevator current floor is "+String(aElevator->getCurrentFloor()));
-      #endif
-      aElevator->targetFloor = randNumber;      
-      aElevator->setState(PICK_TARGET_FLOOR);    
+        Serial.println("CURRENT FLOOR is "+String(aElevator->getCurrentFloor()));
+      #endif  
       break;
     case GOING_UP:
       #ifdef DEBUG_CONTROLLER
@@ -116,7 +148,7 @@ void updateElevator(Elevator *aElevator)
     case PICK_TARGET_FLOOR:
       #ifdef DEBUG_CONTROLLER
         Serial.println("PICKING TARGET FLOOR");
-        Serial.println("Elevator new Target is "+String(aElevator->targetFloor));
+        Serial.println("NEW TARGET is "+String(aElevator->targetFloor));
       #endif
       checkForTarget(aElevator);
       break;
@@ -133,7 +165,98 @@ void updateElevator(Elevator *aElevator)
   }
 }
 
-//this funtion mainly for expermintaion may get used somehow
+//this is where our entry for where que will get called when a button is pressed
+//for now its when button is pressed down, que will take the floor number
+//the que will eventually be checked by elevator/controller and updated
+//this is still work in progress
+void checkButtons(uint8_t aNumOfFloors,Buttons *aButtons) 
+{
+  for (uint8_t i=0; i<aNumOfFloors; i++) 
+  {
+    //uint8_t action = elevator->getButtons()->getButtonAction(i);
+    uint8_t action = aButtons->getButtonAction(i);
+    if (action != None) 
+    {
+      //Serial.print("Button ");
+      //Serial.print(i);
+      switch (action) 
+      {
+        case Up:
+          //Serial.println(" Up!");
+          break;
+        case Down:
+          count++;
+          #ifdef DEBUG_CONTROLLER
+            Serial.println("button "+String(i)+" Down!");
+            Serial.println("the count is "+String(count));
+          #endif          
+          addFloorRequest(i);
+          break;
+        default:
+          //Serial.print(": ");
+          //Serial.print(action);
+          Serial.println(": Huh?");
+          break;
+      }
+    }
+  }
+}
+#endif
+
+////****END OF CODE***//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////****EXAMPLE CODE or SCRAP CODE***//
+//elevator->getButtons()->callEveryLoop();
+
+//Buttons * Elevator::getButtons()
+//{
+  //Serial.println("getButtons function");
+  //return buttons;
+//}
+
+/* 
+    #ifdef ELEVATOR_LIVE
+        updateElevator(elevator);
+      #endif
+    for(int i =0;i < 1000;i++)
+    {
+      buttons->callEveryLoop();
+      checkButtons(NUM_OF_FLOORS,buttons);
+       
+      delay(1);
+    }
+
+
+    //this funtion mainly for expermintaion may get used somehow
 //this is still work in progress
 void showFloorNum(uint8_t buttonNum)
 {
@@ -170,65 +293,8 @@ void showFloorNum(uint8_t buttonNum)
   }
 }
 
-//this is where our entry for where que will get called when a button is pressed
-//for now its when button is pressed down, que will take the floor number
-//the que will eventually be checked by elevator/controller and updated
-//this is still work in progress
-void checkButtons(uint8_t aNumOfFloors,Buttons *aButtons) 
-{
-  for (uint8_t i=0; i<aNumOfFloors; i++) 
-  {
-    //uint8_t action = elevator->getButtons()->getButtonAction(i);
-    uint8_t action = aButtons->getButtonAction(i);
-    if (action != None) 
-    {
-      //Serial.print("Button ");
-      //Serial.print(i);
-      switch (action) 
-      {
-        case Up:
-          //Serial.println(" Up!");
-          break;
-        case Down:
-          count++;
-          #ifdef DEBUG_CONTROLLER
-            Serial.println("button "+String(i)+" Down!");
-            Serial.println("the count is "+String(count));
-          #endif
-          //function call to add button to a que will go here
-          break;
-        default:
-          //Serial.print(": ");
-          //Serial.print(action);
-          //Serial.println(": Huh?");
-          break;
-      }
-    }
-  }
-}
-#endif
-
-////****END OF CODE***//
-
-////****EXAMPLE CODE or SCRAP CODE***//
-//elevator->getButtons()->callEveryLoop();
-
-//Buttons * Elevator::getButtons()
-//{
-  //Serial.println("getButtons function");
-  //return buttons;
-//}
-
-/* 
-    #ifdef ELEVATOR_LIVE
-        updateElevator(elevator);
-      #endif
-    for(int i =0;i < 1000;i++)
-    {
-      buttons->callEveryLoop();
-      checkButtons(NUM_OF_FLOORS,buttons);
-       
-      delay(1);
-    }
+      //aElevator->targetFloor = randNumber;      
+      //aElevator->setState(PICK_TARGET_FLOOR); 
+      
     */
 
