@@ -6,7 +6,7 @@
 //some functions are just placeholders/experimental and may not get actually used, 
 //kind of depending on what controller will delegate
 
-enum ElevatorState { NOT_IN_USE, GOING_UP, GOING_DOWN, FLOOR_CHANGE, PICK_TARGET_FLOOR, TARGET_REACHED };
+enum ElevatorState { NOT_IN_USE, GOING_UP, GOING_DOWN, PICK_TARGET_FLOOR, TARGET_REACHED };
 
 class Elevator
 {
