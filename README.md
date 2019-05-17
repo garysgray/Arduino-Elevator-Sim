@@ -1,16 +1,17 @@
 # Arduino-Elevator-Sim
 Arduino Elevator Sim : This is mainly code for a work in progress project with some links and pdf to tutorials that helped get this together so far.
 
-At this time the code is not finished, the elevator has a simple life cycle and if run, the elevator will be given random floors and one can watch the elevator go "up and down" from the digiatal display and LED's indicating floors reached/passed. One can also use the serial output to follow along. At this time button presses do not tell elevator which floor to go to, buttons will seem unresponsive.
+At this time the code is really coming along, the elevator has a life cycle and if run, one can push a floor button and watch the elevator go "up and down" from the digiatal display and LED's indicating floors reached/passed. Included a LED indicating when elevator stops and opens doors. One can also use the serial output to follow along  while it prints out the elevators differrent states and button presses. 
 
-Added code to help throttle the elevator update now one can see results of pushing buttons (in serial ouptu) while elevator is running 
+5/14/19
+Update: Added code to help throttle the elevator update. Now one can see results of pushing buttons (in serial ouptu) while elevator is running 
 
 5/15/19
-update: life cycle is better and now user can press buttons and go to floors. its to simple and needs some adjustments to picking the right order of floors to target.
-random floor s taken out no longer neede. button presses get added to "queue"
+Update: Life cycle is better and now user can press buttons and see elevator go to requested floors. Its still to simple and needs some adjustments for targeting best floor.
+Random floor genarator taken out becuse it is no longer needed. Button presses now get added to "queue" and then checked during elevator life cycle.
 
 5/16/19
-update: got the elevator working much more like a real elevator, just have to clean up code and then start fine tuning stuff
+Update: Got the elevator life cycle working much more like a real elevator with buttons. Know I have to clean up experimental hacky code and some rearrange some things. Next major change will be to give elevator different modes of operation, e.g user hits a fire button.
 
 Where to find diagrams:
 
