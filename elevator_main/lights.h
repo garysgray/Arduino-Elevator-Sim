@@ -21,19 +21,23 @@ byte lightsArray[8] =
     B00000001,  // = DOWN
 };
 
-void updateLightShiftRegister(byte digit)
+void updateLightShiftRegister(byte aDigit)
 {
    digitalWrite(LIGHTS_LATCH_PIN, LOW);
-   shiftOut(LIGHTS_DATA_PIN, LIGHTS_CLOCK_PIN, LSBFIRST, lightsArray[digit]);
+   shiftOut(LIGHTS_DATA_PIN, LIGHTS_CLOCK_PIN, LSBFIRST, lightsArray[aDigit]);
    digitalWrite(LIGHTS_LATCH_PIN, HIGH);
 }
-void comboLight(uint8_t bit1,uint8_t bit2)
+
+//so way i layed out LED's they go left-right 
+//0=door open 1=floor 1 2= floor 2 ect.ect.
+//Need MSBFIRST to make this work or combo is backwards
+void comboLight(uint8_t aBit1,uint8_t aBit2)
 {
   byte bitBuffer = 0;
-  bitWrite(bitBuffer, abs(bit1-7), HIGH);
-  bitWrite(bitBuffer, abs(bit2-7), HIGH);
+  bitWrite(bitBuffer, abs(aBit1), HIGH);
+  bitWrite(bitBuffer, abs(aBit2), HIGH);
   digitalWrite(LIGHTS_LATCH_PIN, LOW);
-  shiftOut(LIGHTS_DATA_PIN, LIGHTS_CLOCK_PIN, LSBFIRST, bitBuffer);
+  shiftOut(LIGHTS_DATA_PIN, LIGHTS_CLOCK_PIN, MSBFIRST , bitBuffer);
   digitalWrite(LIGHTS_LATCH_PIN, HIGH);
 }
 void setUpLights() 

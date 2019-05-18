@@ -25,12 +25,12 @@ byte digitalNumsArray[10] =
 };
                              
 // display a number on the digital segment display
-void updateDigitalShiftRegister(byte digit) 
+void updateDigitalShiftRegister(byte aDigit) 
 {
   // set the latchPin to low potential, before sending data
   digitalWrite(DISPLAY_LATCH_PIN, LOW);   
   // the original data (bit pattern)
-  shiftOut(DISPLAY_DATA_PIN, DISPLAY_CLOCK_PIN, LSBFIRST, digitalNumsArray[digit]);   
+  shiftOut(DISPLAY_DATA_PIN, DISPLAY_CLOCK_PIN, LSBFIRST, digitalNumsArray[aDigit]);   
   // set the latchPin to high potential, after sending data
   digitalWrite(DISPLAY_LATCH_PIN, HIGH);
 }

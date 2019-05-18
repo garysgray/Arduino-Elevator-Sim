@@ -8,8 +8,8 @@
 
 ////****FOR DEBUGGING***//
 #define DEBUG_MAIN 
-#define SERIAL_BAUD 115200 
-
+#define SERIAL_BAUD 115200
+ 
 ////****FOR MAIN***//
 #define NUM_OF_FLOORS 5 
 #define DELAY_INTERVAL 4000
@@ -21,18 +21,19 @@
 //simple functions, then it helps set up objectsand finally runs the main Arduino loop
 
 ////****declares stuff that will be used in Ardunio loop***//
+
 //this is used for throttling elevator update
 unsigned long previousMillis=0;
 Buttons *buttons;
 Elevator *elevator;
 
 ////****functions to set up objects before going into the loop***/
-void setupElevator(uint8_t aNumofFloors)
+void setUpElevator(uint8_t aNumofFloors)
 {
     elevator = new Elevator(aNumofFloors);
 }
 
-void setupButtons() 
+void setUpButtons() 
 {
     buttons = new Buttons(NUM_OF_FLOORS, INPUT_PIN, LATCH_PIN, DATA_PIN, CLOCK_PIN);
 }
@@ -40,10 +41,8 @@ void setupButtons()
 ////****FOR DEBUGGING***//
 void setUpSerial() 
 {
-    Serial.begin(SERIAL_BAUD);
-    #ifdef DEBUG_MAIN
-    Serial.println("Serial ready!");
-    #endif
+  Serial.begin(SERIAL_BAUD);
+  Serial.println("Serial ready!");
 }
 
 ////****ARDUINO CODE that sets up and runs the loop***//
@@ -51,18 +50,14 @@ void setup()
 {
   //Wire library used for buttons.h
   Wire.begin();
-  //this is temp for now being used to create random floors in updateElevator function
-  //which will eventually be replaced with a que that will be held by controller or elevator
-  randomSeed(analogRead(0));
-  ////****FOR DEBUGGING***//     
-  setUpSerial(); 
+  
+  ////****FOR DEBUGGING***//
+  setUpSerial();
+
   ////****set up all the sub-systems***//  
-  ////****these functions are in this file***//
-  setupElevator(NUM_OF_FLOORS);
-  setupButtons();  
-  ////*******this function is found in digital.h***//
+  setUpElevator(NUM_OF_FLOORS);
+  setUpButtons();  
   setUpDigital();  
-  ////*******this function is found in lights.h***//
   setUpLights();    
 }
 
