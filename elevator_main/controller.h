@@ -26,7 +26,8 @@ typedef struct InputHolder
 InputHolder buttonQueue[8];
 //temp way of doing this till expermint code is done
 uint8_t numOfFloors = 5;
-
+Lights lights;
+Digital digital;
 //we can count button presses in debug
 #ifdef DEBUG_CONTROLLER
   int buttonCounter = 0;            
@@ -44,9 +45,9 @@ void openDoor(uint8_t aCurrentFloor)
 {
   //the door LED is 0 when door open show both door and floor LED's
   //functions from lights.h
-    comboLight(0,aCurrentFloor);
+    lights.comboLight(0,aCurrentFloor);
     delay(3000);
-    updateLightShiftRegister(aCurrentFloor); 
+    lights.updateLightShiftRegister(aCurrentFloor); 
     delay(1000);
 }
 
@@ -112,9 +113,9 @@ uint8_t getFloorRequest(uint8_t aCurrentFloor)
 void showCurrentFloor(uint8_t aNum)
 {
   //this is how we tell digital to display current floor num 
-  updateDigitalShiftRegister(aNum);
+  digital.updateDigitalShiftRegister(aNum);
   //this is how we tell lights to light up currect floor LED
-  updateLightShiftRegister(aNum);
+  lights.updateLightShiftRegister(aNum);
 }
 
 //basicly see if floor elevator is passing is in queue

@@ -10,22 +10,50 @@
 #define DISPLAY_LATCH_PIN 3
 #define DISPLAY_DATA_PIN  2
 
-byte digitalNumsArray[10] = 
-{ 
-    B11111100,  // = 0
-    B01100000,  // = 1
-    B11011010,  // = 2
-    B11110010,  // = 3
-    B01100110,  // = 4
-    B10110110,  // = 5
-    B10111110,  // = 6
-    B11100000,  // = 7
-    B11111110,  // = 8
-    B11100110   // = 9
+class Digital
+{
+  public:
+    //constructors
+    Digital();
+    ~Digital(void);
+    
+    void setUpDigital();
+    void updateDigitalShiftRegister(byte aDigit);
+  private:
+    byte digitalNumsArray[10] = 
+    { 
+        B11111100,  // = 0
+        B01100000,  // = 1
+        B11011010,  // = 2
+        B11110010,  // = 3
+        B01100110,  // = 4
+        B10110110,  // = 5
+        B10111110,  // = 6
+        B11100000,  // = 7
+        B11111110,  // = 8
+        B11100110   // = 9
+    };
 };
-                             
-// display a number on the digital segment display
-void updateDigitalShiftRegister(byte aDigit) 
+
+//***   Constructor functions   **//
+Digital::Digital()
+{
+    setUpDigital();
+}
+Digital::~Digital(void) 
+{
+  Serial.println("Destructor of Digital called.");
+}
+
+void Digital::setUpDigital()
+{
+  // Set latchPin, clockPin, dataPin as output
+  pinMode(DISPLAY_LATCH_PIN, OUTPUT);
+  pinMode(DISPLAY_CLOCK_PIN, OUTPUT);
+  pinMode(DISPLAY_DATA_PIN, OUTPUT);  
+}
+
+void Digital::updateDigitalShiftRegister(byte aDigit) 
 {
   // set the latchPin to low potential, before sending data
   digitalWrite(DISPLAY_LATCH_PIN, LOW);   
@@ -35,12 +63,23 @@ void updateDigitalShiftRegister(byte aDigit)
   digitalWrite(DISPLAY_LATCH_PIN, HIGH);
 }
 
-void setUpDigital()
-{
-  // Set latchPin, clockPin, dataPin as output
-  pinMode(DISPLAY_LATCH_PIN, OUTPUT);
-  pinMode(DISPLAY_CLOCK_PIN, OUTPUT);
-  pinMode(DISPLAY_DATA_PIN, OUTPUT);  
-}
+
+
+
+
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
