@@ -12,10 +12,7 @@ class Elevator
 {
    public:  
         //temp members that will be made public at some point
-        uint8_t targetFloor;
-        //members that may be added later
-        //Buttons * getButtons()
-        //que
+        
         
         //constructors
         Elevator(uint8_t aNumFloors);
@@ -23,6 +20,7 @@ class Elevator
 
         //setters for private members
         void setState(uint8_t aState);
+        void setTargetFloor(uint8_t aTargetFloor);
         void increaseCurrentFloor();
         void decreaseCurrentFloor();
 
@@ -30,6 +28,7 @@ class Elevator
         ElevatorState getState(); 
         uint8_t getCurrentFloor();
         uint8_t getNumberOfFloors();
+        uint8_t getTargetFloor();
 
         //functions 
         //this function are placeholders for now and eventaully will do stuff
@@ -41,6 +40,7 @@ class Elevator
         ElevatorState elevatorState;
         uint8_t numFloors;
         uint8_t currentFloor;
+        uint8_t targetFloor;
 };
 
 //***   Constructor functions   **//
@@ -67,6 +67,11 @@ void Elevator::setState(uint8_t aState)
     elevatorState = aState;
 }
 
+void Elevator::setTargetFloor(uint8_t aTargetFloor)
+{
+    targetFloor = aTargetFloor;
+}
+
 void Elevator::increaseCurrentFloor() 
 {
     currentFloor++;
@@ -91,6 +96,11 @@ uint8_t Elevator::getCurrentFloor()
 uint8_t Elevator::getNumberOfFloors() 
 {
     return numFloors;
+}
+
+uint8_t Elevator::getTargetFloor() 
+{
+    return targetFloor;
 }
 
 //*** Functions **//

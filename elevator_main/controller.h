@@ -85,7 +85,6 @@ uint8_t getFloorRequest(uint8_t aCurrentFloor)
         //get the differance between current floor and requested floor
         //and compare, biggest gets saved and used to get correct index
         uint8_t delta = abs(aCurrentFloor - ++tempIndex);
-        Serial.println("SHOW DELTA "+String(delta));
         if(delta > biggestDelta)
         {
           biggestDelta = delta;
@@ -119,41 +118,20 @@ void showCurrentFloor(uint8_t aNum)
 }
 
 //basicly see if floor elevator is passing is in queue
-void floorCheck(uint8_t aCurrentFloor)
+bool thisFloorInQueue(uint8_t aCurrentFloor)
 { 
+  bool tempState= buttonQueue[aCurrentFloor-1].buttonState;
   if(buttonQueue[aCurrentFloor-1].buttonState == true)
   {
-    Serial.println("STOP AT FLOOR "+String(aCurrentFloor));
-    openDoor(aCurrentFloor);
     buttonQueue[aCurrentFloor-1].buttonState = false;   
   }
+  return tempState;
 }
 
-//function that will simulate elevator going up and down
-void changeFloors(Elevator *aElevator)
-{
-  if(aElevator->getCurrentFloor() != aElevator->targetFloor)
-  {
-    if(aElevator->getState()== GOING_UP)
-    {
-      aElevator->increaseCurrentFloor();
-    }
-    else if(aElevator->getState()== GOING_DOWN)
-    {
-      aElevator->decreaseCurrentFloor();
-    }
-    //show floor with LED, Digit, and Serial if debug is defined
-    showCurrentFloor(aElevator->getCurrentFloor());
-    //we check to see if this floor is in queue if so we simulate stopping
-    floorCheck(aElevator->getCurrentFloor());
-    #ifdef DEBUG_CONTROLLER
-      Serial.println("SHOW FLOOR "+String(aElevator->getCurrentFloor())+" LED + #");
-    #endif
-  }
-  else
-  {
-    aElevator->setState(TARGET_REACHED);
-  }  
+//see if we need to change floors if its same floor, no need
+bool changeFloors(uint8_t aCurrentFloor,uint8_t aTargetFloor)
+{  
+  return aCurrentFloor != aTargetFloor;
 }
 
 //after we get a floor from queue we pick floor direction
@@ -182,7 +160,7 @@ void updateElevator(Elevator *aElevator)
   {
     case NOT_IN_USE:
       showCurrentFloor(aElevator->getCurrentFloor());
-      aElevator->targetFloor = getFloorRequest(aElevator->getCurrentFloor());
+      aElevator->setTargetFloor(getFloorRequest(aElevator->getCurrentFloor())); //= getFloorRequest(aElevator->getCurrentFloor());
       aElevator->setState(PICK_TARGET_FLOOR);    
       #ifdef DEBUG_CONTROLLER
         Serial.println("NOT IN USE");
@@ -190,23 +168,67 @@ void updateElevator(Elevator *aElevator)
       #endif  
       break;
     case GOING_UP:
-      changeFloors(aElevator);
+      //show floor with LED, Digit, and Serial if debug is defined
+      showCurrentFloor(aElevator->getCurrentFloor());
+      if(changeFloors(aElevator->getCurrentFloor(),aElevator->getTargetFloor()))
+      {
+        //we check to see if this floor is in queue if so we simulate stopping
+        if(thisFloorInQueue(aElevator->getCurrentFloor()))
+        {         
+          openDoor(aElevator->getCurrentFloor());
+          #ifdef DEBUG_CONTROLLER
+            Serial.println("GOING UP");
+            Serial.println("SHOW FLOOR "+String(aElevator->getCurrentFloor())+" LED + #");
+          #endif          
+        }
+        else
+        {
+           aElevator->increaseCurrentFloor();   
+        }  
+      }
+      else
+      {
+        aElevator->setState(TARGET_REACHED);
+      }
       #ifdef DEBUG_CONTROLLER
         Serial.println("GOING UP");
+        Serial.println("SHOW FLOOR "+String(aElevator->getCurrentFloor())+" LED + #");
       #endif        
       break;
     case GOING_DOWN:
-      changeFloors(aElevator); 
+      //show floor with LED, Digit, and Serial if debug is defined
+      showCurrentFloor(aElevator->getCurrentFloor());
+      if(changeFloors(aElevator->getCurrentFloor(),aElevator->getTargetFloor()))
+      {
+        //we check to see if this floor is in queue if so we simulate stopping
+        if(thisFloorInQueue(aElevator->getCurrentFloor()))
+        {
+          openDoor(aElevator->getCurrentFloor());
+          #ifdef DEBUG_CONTROLLER
+            Serial.println("FLOOR STOP");
+            Serial.println("OPEN DOORS");
+          #endif         
+        }
+        else
+        {
+           aElevator->decreaseCurrentFloor();   
+        }  
+      }
+      else
+      {
+        aElevator->setState(TARGET_REACHED);
+      }
       #ifdef DEBUG_CONTROLLER
         Serial.println("GOING DOWN");
+        Serial.println("SHOW FLOOR "+String(aElevator->getCurrentFloor())+" LED + #");
       #endif        
-      break;
+      break;   
     case PICK_TARGET_FLOOR:
-      tempState = getTargetDirection(aElevator->getCurrentFloor(),aElevator->targetFloor);
+      tempState = getTargetDirection(aElevator->getCurrentFloor(),aElevator->getTargetFloor());
       aElevator->setState(tempState);
       #ifdef DEBUG_CONTROLLER
         Serial.println("PICKING TARGET FLOOR");
-        Serial.println("NEW TARGET = "+String(aElevator->targetFloor));
+        Serial.println("NEW TARGET = "+String(aElevator->getTargetFloor()));
       #endif         
       break;     
     case TARGET_REACHED:
@@ -215,7 +237,6 @@ void updateElevator(Elevator *aElevator)
       #ifdef DEBUG_CONTROLLER
         Serial.println("TARGET REACHED");
       #endif
-      //if no new target for now goto not in use
       break;
     default:
       Serial.println(": Huh?");

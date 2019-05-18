@@ -9,6 +9,7 @@
 #define LIGHTS_LATCH_PIN 6 // (6) ST_CP [RCK] on 74HC595
 #define LIGHTS_DATA_PIN  7 // (7) DS [S1] on 74HC595
 
+
 byte lightsArray[8] = 
 { 
     B10000000,  // = OPEN DOOR
@@ -46,5 +47,4 @@ void setUpLights()
   pinMode(LIGHTS_DATA_PIN, OUTPUT);  
   pinMode(LIGHTS_CLOCK_PIN, OUTPUT);
 }
-
 #endif

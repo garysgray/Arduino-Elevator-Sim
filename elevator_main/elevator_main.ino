@@ -26,6 +26,7 @@
 unsigned long previousMillis=0;
 Buttons *buttons;
 Elevator *elevator;
+Elevator otherEle(NUM_OF_FLOORS);
 
 ////****functions to set up objects before going into the loop***/
 void setUpElevator(uint8_t aNumofFloors)
