@@ -12,13 +12,13 @@ class Elevator
 {
    public:  
         //temp members that will be made public at some point
-        
-        
+              
         //constructors
-        Elevator(uint8_t aNumFloors);
+        Elevator();
         ~Elevator(void);
 
         //setters for private members
+        void setNumFloors(uint8_t aNum);
         void setState(uint8_t aState);
         void setTargetFloor(uint8_t aTargetFloor);
         void increaseCurrentFloor();
@@ -29,13 +29,7 @@ class Elevator
         uint8_t getCurrentFloor();
         uint8_t getNumberOfFloors();
         uint8_t getTargetFloor();
-
-        //functions 
-        //this function are placeholders for now and eventaully will do stuff
-        void updateQue();
-        void calculateTarget();
-        void updateElevator();
-        
+               
     private:
         ElevatorState elevatorState;
         uint8_t numFloors;
@@ -44,9 +38,9 @@ class Elevator
 };
 
 //***   Constructor functions   **//
-Elevator::Elevator(uint8_t aNumFloors)
+Elevator::Elevator()
 {
-    numFloors = aNumFloors;
+    numFloors = 0;
     elevatorState = NOT_IN_USE;
     currentFloor = 1;
     targetFloor = 1;
@@ -62,6 +56,11 @@ Elevator::~Elevator(void)
 }
 
 //*** setters functions for private members **//
+void Elevator::setNumFloors(uint8_t aNum) 
+{
+    numFloors = aNum;
+}
+
 void Elevator::setState(uint8_t aState) 
 {
     elevatorState = aState;
@@ -103,20 +102,5 @@ uint8_t Elevator::getTargetFloor()
     return targetFloor;
 }
 
-//*** Functions **//
-void Elevator::updateQue()
-{
-  Serial.println("updateQue function");
-}
-
-void Elevator::updateElevator()
-{
-  Serial.println("updateElevator function");
-}
-
-void Elevator::calculateTarget()
-{
-  Serial.println("calculateTarget function");
-}
 #endif
 

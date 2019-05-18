@@ -4,15 +4,15 @@
 //code from example found here Written by Michael Sokolewicz. https://www.instructables.com/id/Driving-Dozens-of-Buttons/
 // this code can only handle 8 buttons because it's set up to use 8 only
 
-              
+#define NUM_OF_BUTTONS 5              
 #define DEBUG_BUTTONS  
 #define NUM_OF_SHIFTS  1               // number of shift registers you have chained together.
 #define MAX_BUTTONS (8 * NUM_OF_SHIFTS)
 #define DEFAULT_DELAY_MILLIS  50L      // this is the default number of millis between button checks.
-#define CLOCK_PIN      8               // 74HC595 SH_CP 
-#define LATCH_PIN      9               // 74HC595 ST_CP 
-#define DATA_PIN      10               // 74HC595 DS    
-#define INPUT_PIN     14               // A0
+#define BUTTONS_CLOCK_PIN      8               // 74HC595 SH_CP 
+#define BUTTONS_LATCH_PIN      9               // 74HC595 ST_CP 
+#define BUTTONS_DATA_PIN      10               // 74HC595 DS    
+#define BUTTONS_INPUT_PIN     14               // A0
 
 //each button gets a context(info struct)used to get each buttons current status
 enum ButtonAction { None, Up, Down };
@@ -28,20 +28,16 @@ typedef struct ButtonContext
 class Buttons 
 {
     public:
-        Buttons(uint8_t numButtons, uint8_t inputPin, uint8_t latchPin, uint8_t dataPin, uint8_t clockPin, unsigned long delay = DEFAULT_DELAY_MILLIS);
+        Buttons(unsigned long delay = DEFAULT_DELAY_MILLIS);
 
         ~Buttons(void);
         // this MUST BE CALLED EVERY LOOP in your script, or class will work properly!
         void callEveryLoop();
         // returns a ButtonAction.when you read the current button action, the action is reset to NONE for that button
         ButtonAction getButtonAction(uint8_t whichButton);
-
+        void setUpButtons();
     private:
         uint8_t numButtons;
-        uint8_t inputPin;
-        uint8_t latchPin;
-        uint8_t dataPin;
-        uint8_t clockPin;
         uint8_t strobeCurButton;
         unsigned long delayMillis;
         unsigned long checkButtonTimeout;
@@ -51,9 +47,9 @@ class Buttons
 };
 
 //*** constructors **//
-Buttons::Buttons(uint8_t nb, uint8_t ip, uint8_t lp, uint8_t dp, uint8_t cp, unsigned long delay) 
+Buttons::Buttons(unsigned long delay) 
 {
-    numButtons = nb;
+    numButtons = NUM_OF_BUTTONS;
     
     if (numButtons > MAX_BUTTONS) 
     {
@@ -63,11 +59,6 @@ Buttons::Buttons(uint8_t nb, uint8_t ip, uint8_t lp, uint8_t dp, uint8_t cp, uns
         #endif
           while (true) ;
     }
-    
-    inputPin = ip;
-    latchPin = lp;
-    dataPin = dp;
-    clockPin = cp;
     delayMillis = delay;
 
     buttonContexts = (ButtonContext*)malloc(numButtons * sizeof(ButtonContext));
@@ -91,12 +82,13 @@ Buttons::Buttons(uint8_t nb, uint8_t ip, uint8_t lp, uint8_t dp, uint8_t cp, uns
     // last one leads back to index 0.
     strobeNextButton[numButtons-1] = 0;
     strobeCurButton = numButtons-1;
-    
+
+    setUpButtons();
     // init the Arduino pins.
-    pinMode(inputPin, INPUT);
-    pinMode(latchPin, OUTPUT);
-    pinMode(dataPin, OUTPUT);
-    pinMode(clockPin, OUTPUT);
+    //pinMode(BUTTONS_INPUT_PIN, INPUT);
+    //pinMode(BUTTONS_LATCH_PIN, OUTPUT);
+    //pinMode(BUTTONS_DATA_PIN, OUTPUT);
+    //pinMode(BUTTONS_CLOCK_PIN, OUTPUT);
 
     // prep next strobe action timeout.
     checkButtonTimeout = 0;
@@ -116,6 +108,15 @@ Buttons::~Buttons(void)
 }
 
 //*** Functions **//
+void Buttons::setUpButtons()
+{
+  pinMode(BUTTONS_INPUT_PIN, INPUT);
+  pinMode(BUTTONS_LATCH_PIN, OUTPUT);
+  pinMode(BUTTONS_DATA_PIN, OUTPUT);
+  pinMode(BUTTONS_CLOCK_PIN, OUTPUT);
+
+}
+
 ButtonAction Buttons::getButtonAction(uint8_t whichButton) 
 {
     // sanity check.
@@ -138,16 +139,16 @@ void Buttons::callEveryLoop()
         strobeCurButton = strobeNextButton[strobeCurButton];
         
         // tell the shift-registers we're sending a new value to shift.
-        digitalWrite(latchPin, LOW);
+        digitalWrite(BUTTONS_LATCH_PIN, LOW);
         
         // shift out the pattern which activates only this button.
-        shiftOut(dataPin, clockPin, MSBFIRST, (uint8_t)0x01 << strobeCurButton);
+        shiftOut(BUTTONS_DATA_PIN, BUTTONS_CLOCK_PIN, MSBFIRST, (uint8_t)0x01 << strobeCurButton);
         
         // tell the shift register we're done shifting and it can now send the pattern out its output pins.
-        digitalWrite(latchPin, HIGH);
+        digitalWrite(BUTTONS_LATCH_PIN, HIGH);
 
         // at this button is the only one which can be sending a signal, So the the input pin reflects the state of just this button: HIGH or LOW.
-        uint8_t buttonState = digitalRead(inputPin);
+        uint8_t buttonState = digitalRead(BUTTONS_INPUT_PIN);
 
         // interpret the button state.
         if (buttonState != buttonContexts[strobeCurButton].state) {

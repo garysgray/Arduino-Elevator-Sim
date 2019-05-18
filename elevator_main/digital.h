@@ -63,11 +63,6 @@ void Digital::updateDigitalShiftRegister(byte aDigit)
   digitalWrite(DISPLAY_LATCH_PIN, HIGH);
 }
 
-
-
-
-
-
 #endif
 
 

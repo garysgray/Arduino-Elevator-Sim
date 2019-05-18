@@ -72,8 +72,4 @@ void Lights::comboLight(uint8_t aBit1,uint8_t aBit2)
   digitalWrite(LIGHTS_LATCH_PIN, HIGH);
 }
 
-
-
-
-
 #endif
