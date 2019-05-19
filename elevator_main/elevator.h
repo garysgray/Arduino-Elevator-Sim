@@ -1,12 +1,13 @@
 #ifndef ELEVATOR_H
 #define ELEVATOR_H
 
+#define DEBUG_ELEVATOR
 //object that will simulate a elevator by holding members that will represent elevator info and state
 //most functinality will be getting and setting mebers, controller will do a lot of the work 
 //some functions are just placeholders/experimental and may not get actually used, 
 //kind of depending on what controller will delegate
 
-enum ElevatorState { NOT_IN_USE, GOING_UP, GOING_DOWN, PICK_TARGET_FLOOR, TARGET_REACHED };
+enum ElevatorState { NOT_IN_USE, GOING_UP, GOING_DOWN, FLOOR_STOP, PICK_TARGET_DIRECTION, TARGET_REACHED };
 
 class Elevator
 {
@@ -44,13 +45,14 @@ Elevator::Elevator()
     elevatorState = NOT_IN_USE;
     currentFloor = 1;
     targetFloor = 1;
-    //buttons = new Buttons(NUM_BUTTONS, INPUT_PIN, LATCH_PIN, DATA_PIN, CLOCK_PIN);
-    Serial.println("Constructor of Elevator called.");   
+    #ifdef DEBUG_ELEVATOR
+        Serial.println("Elevator Ready");
+    #endif  
 }
 
 Elevator::~Elevator(void) 
 {
-    #ifdef DEBUG_BUTTONS
+    #ifdef DEBUG_ELEVATOR
         Serial.println("Destructor of Elevator called.");
     #endif
 }

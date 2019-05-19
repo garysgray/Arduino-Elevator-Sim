@@ -2,10 +2,10 @@
 #ifndef DIGITAL_H
 #define DIGITAL_H
 
+#define DEBUG_DIGITAL
 //code taken from example from Elegoo Super Starter Kit for UNO V1.0.2017.7.9 PDF: Lesson 19 74HC595 And Segment Display
 // may eventually make this a class and have it be treated as an object in main code like the buttons and elevator objects
 //for now these objects and functions can be called anywhere 
-
 #define DISPLAY_CLOCK_PIN 4
 #define DISPLAY_LATCH_PIN 3
 #define DISPLAY_DATA_PIN  2
@@ -15,10 +15,9 @@ class Digital
   public:
     //constructors
     Digital();
-    ~Digital(void);
-    
-    void setUpDigital();
+    ~Digital(void);   
     void updateDigitalShiftRegister(byte aDigit);
+    void setUpDigital();
   private:
     byte digitalNumsArray[10] = 
     { 
@@ -38,11 +37,15 @@ class Digital
 //***   Constructor functions   **//
 Digital::Digital()
 {
-    setUpDigital();
+  #ifdef DEBUG_DIGITAL
+      Serial.println("constructor of Digital called.");
+  #endif  
 }
 Digital::~Digital(void) 
 {
-  Serial.println("Destructor of Digital called.");
+  #ifdef DEBUG_DIGITAL
+      Serial.println("Destructor of Digital called.");
+  #endif  
 }
 
 void Digital::setUpDigital()
@@ -50,7 +53,10 @@ void Digital::setUpDigital()
   // Set latchPin, clockPin, dataPin as output
   pinMode(DISPLAY_LATCH_PIN, OUTPUT);
   pinMode(DISPLAY_CLOCK_PIN, OUTPUT);
-  pinMode(DISPLAY_DATA_PIN, OUTPUT);  
+  pinMode(DISPLAY_DATA_PIN, OUTPUT);
+  #ifdef DEBUG_DIGITAL
+      Serial.println("Digital ready.");
+  #endif 
 }
 
 void Digital::updateDigitalShiftRegister(byte aDigit) 
@@ -62,7 +68,6 @@ void Digital::updateDigitalShiftRegister(byte aDigit)
   // set the latchPin to high potential, after sending data
   digitalWrite(DISPLAY_LATCH_PIN, HIGH);
 }
-
 #endif
 
 

@@ -13,6 +13,10 @@ Random floor genarator taken out becuse it is no longer needed. Button presses n
 5/16/19
 Update: Got the elevator life cycle working much more like a real elevator with buttons. Know I have to clean up experimental hacky code and some rearrange some things. Next major change will be to give elevator different modes of operation, e.g user hits a fire button.
 
+5/19/19
+Update: really just a ton of clean up, finally made controller a class and basicly made it so it holds all the key elements. Now updateElevator gets called as a controller object called from main loop().
+Everything else is a class now as well. Cleaned up controllers elevator update a lot. Its a lot easier to follow now. Still a little bit of repative/long code but untill life cycle is completly figured out its easier to follow. Then later wrap repative code in functions. Also added the function calls to have a LED light up for elevator direction while its moving along with Floor LED. pretty cool
+
 Where to find diagrams:
 
 BUTTONS : https://www.instructables.com/id/Driving-Dozens-of-Buttons/,

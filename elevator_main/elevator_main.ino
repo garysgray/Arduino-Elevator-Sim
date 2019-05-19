@@ -1,9 +1,5 @@
 #include <Wire.h>
 #include <Arduino.h>
-#include "digital.h"
-#include "buttons.h"
-#include "elevator.h"
-#include "lights.h"
 #include "controller.h"
 
 ////****FOR DEBUGGING***//
@@ -23,6 +19,7 @@
 ////****declares stuff that will be used in Ardunio loop***//
 //this is used for throttling elevator update
 unsigned long previousMillis=0;
+//our controller that runs the show basiclly
 Controller controller;
 
 ////****FOR DEBUGGING***//
@@ -35,12 +32,17 @@ void setUpSerial()
 ////****ARDUINO CODE that sets up and runs the loop***//
 void setup() 
 {
+  ////****FOR DEBUGGING***//
+  setUpSerial();
+  
   //Wire library used for buttons.h
   Wire.begin();
-  ////****FOR DEBUGGING***//
-  setUpSerial(); 
+  
+  //set up sub-systems 
   controller.setElevatorFloorNum(NUM_OF_FLOORS); 
-  //controller.setUpButtons(NUM_OF_FLOORS);  
+  controller.setUpButtons(NUM_OF_FLOORS);  
+  controller.setUpLights(); 
+  controller.setUpDigital();  
 }
 
 void loop() 

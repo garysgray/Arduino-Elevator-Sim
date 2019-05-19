@@ -1,16 +1,18 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#include "digital.h"
+#include "buttons.h"
+#include "elevator.h"
+#include "lights.h"
+
 #define DEBUG_CONTROLLER
 #define NUM_OF_FLOORS 5
-//this file "controller.h" is currently doing a lot of heavy lifting because its keeps the main loop code cleaner
-//most of this code will eventually be delegated somewhere else or reconstructed in a better way
-//possibly controller will eventually hold all the objects(elevator,buttons,light,digital) and then
-//controller will get called/used thru thru main file. 
 
-//these functions are mostly prototypes and will either be redone or there just for testing/development
-//for eaxmple passing in objects (elevator for example) because its quicker and easier, when I should be
-//passing there information as arguments, which I will change/fix after more functinality is working as intended
+//this file "controller.h" is currently doing a lot of heavy lifting because its keeps the main loop code cleaner
+//some code might get delegated somewhere else or reconstructed in a better way....eventually!!!!
+//controller will get called/used thru thru main file. 
+//a few of these functions are still prototypes and are for testing/development
 
 //holds info abut what button was pushed for queue, button state being the most important
 //others members may get used based on how efficiant we want the queue to work
@@ -21,6 +23,9 @@ typedef struct InputHolder
   long timeStamp;  
 } InputHolder;
 
+//order in which the buttons are laid out I use this when doing LED combinations
+enum LED_TYPE { LED_DOOR_OPEN, LED_FLOOR_1, LED_FLOOR_2, LED_FLOOR_3, LED_FLOOR_4, LED_FLOOR_5, LED_UP, LED_DOWN };
+
 class Controller
 {
   public:
@@ -28,19 +33,25 @@ class Controller
     Controller();
     ~Controller(void);
 
+    void setDoorRequest();
+    bool checkDoorRequest();
+    void setTempElevatorState(ElevatorState aState);
+    ElevatorState getTempElevatorState();
+    void setElevatorFloorNum(uint8_t aNum);
+    void setUpButtons(uint8_t aNum);
+    void setUpLights();
+    void setUpDigital();
+    void upDateButtons();
     void checkButtons();
     void addFloorRequest(uint8_t aButtonNum);
     uint8_t getFloorRequest();
     ElevatorState getTargetDirection();
     bool changeFloors();
-    void showCurrentFloor(uint8_t aNum);
+    void showCurrentFloor(uint8_t aNum,ElevatorState aState);
     bool thisFloorInQueue();
     void openDoor();
     void upDateElevator();
-    void upDateButtons();
-    void setElevatorFloorNum(uint8_t aNum);
-    
-    
+        
   private:
     //this will be the que that we feed floor requests from checkButtons()
     InputHolder buttonQueue[8];
@@ -51,17 +62,65 @@ class Controller
     Buttons buttons;
     Elevator elevator;
     int buttonCounter = 0;
-  
+    bool doorRequest = false;
+    ElevatorState tempElevatorState = NOT_IN_USE;  
 };
 
 //***   Constructor functions   **//
 Controller::Controller()
 {
-    //setUpElevator();
+  #ifdef DEBUG_CONTROLLER
+    Serial.println("Controller ready.");
+  #endif
 }
+
 Controller::~Controller(void) 
 {
-  Serial.println("Destructor of Controller called.");
+  #ifdef DEBUG_CONTROLLER
+    Serial.println("Destructor of Controller called.");
+  #endif  
+}
+
+void Controller::setDoorRequest()
+{
+  doorRequest = true;
+}
+bool Controller::checkDoorRequest()
+{
+  bool tempDoorRequest = doorRequest;
+  doorRequest = false;
+  return tempDoorRequest;  
+}
+void Controller::setTempElevatorState(ElevatorState aState)
+{
+  tempElevatorState = aState;
+}
+ElevatorState Controller::getTempElevatorState()
+{
+  return tempElevatorState;
+}
+
+void Controller::setElevatorFloorNum(uint8_t aNum)
+{
+  elevator.setNumFloors(aNum);
+  #ifdef DEBUG_CONTROLLER
+    Serial.println("Elevator ready.");
+  #endif 
+}
+
+void Controller::setUpButtons(uint8_t aNum)
+{
+  buttons.setUpButtons(aNum); 
+}
+
+void Controller::setUpLights()
+{
+  lights.setUpLights();
+}
+
+void Controller::setUpDigital()
+{
+  digital.setUpDigital();
 }
 
 void Controller::upDateButtons()
@@ -70,7 +129,6 @@ void Controller::upDateButtons()
 }
 
 //this is where our entry for where que will get called when a button is pressed
-//this is still work in progress
 void Controller::checkButtons() 
 {
   for (uint8_t i = 0; i < elevator.getNumberOfFloors(); i++) 
@@ -82,28 +140,22 @@ void Controller::checkButtons()
       {
         case Up:
           break;
-        case Down:          
-          #ifdef DEBUG_CONTROLLER
-            
-            //add the 1 because arrays count from 0 but our floors start a 1
-            Serial.println("BUTTON "+String(i+1)+" Down!");
-            Serial.println("BUTTON COUNT = "+String(buttonCounter));
-          #endif          
+        case Down:                           
           addFloorRequest(i);
           buttonCounter++;
+          #ifdef DEBUG_CONTROLLER           
+            Serial.println("BUTTON "+String(i+1)+" Down!");
+            Serial.println("BUTTON COUNT = "+String(buttonCounter));
+          #endif  
           break;
         default:
-          Serial.println(": Huh?");
+          Serial.println(":in check buttons Huh?");
           break;
       }
     }
   }
 }
 
-void Controller::setElevatorFloorNum(uint8_t aNum)
-{
-  elevator.setNumFloors(aNum); 
-}
 //this gets called when user presses button in check buttons function
 //may pass other info if needed e.g. timevalue
 void Controller::addFloorRequest(uint8_t aButtonNum)
@@ -135,7 +187,8 @@ uint8_t Controller::getFloorRequest()
       {
         //take floor out of queue
         buttonQueue[i].buttonState = false;
-        openDoor();
+        
+        setDoorRequest();
         return tempCurrentFloor;
       }
       else //other floors where requested
@@ -156,15 +209,14 @@ uint8_t Controller::getFloorRequest()
     }
   }
   //this means an actual button on another floor was pressed
-  //if(buttonPush ==true && biggestDelta != 0)
-  if(buttonPush ==true)
+  if(buttonPush == true)
   {
     //take out of queue basiclly
     buttonQueue[biggestDeltaIndex].buttonState = false;
     //increase so floor count is right on return
     return ++biggestDeltaIndex;
   }
-  else //elavtor was checking loop, no buttons where pushed return currentFloor back
+  else //elavtor was checking loop, no buttons where pushed return currentFloor back as is
   {
     return tempCurrentFloor;
   }  
@@ -185,7 +237,7 @@ ElevatorState Controller::getTargetDirection()
   }
   else
   {
-     return NOT_IN_USE;
+     return NOT_IN_USE; //means we are on still on same floor just waiting
   }
 }
 
@@ -196,49 +248,67 @@ bool Controller::changeFloors()
 }
 
 //show user thru LED and Digital Display
-void Controller::showCurrentFloor(uint8_t aNum)
+void Controller::showCurrentFloor(uint8_t aNum,ElevatorState aState)
 {
   //this is how we tell digital to display current floor num 
   digital.updateDigitalShiftRegister(aNum);
-  //this is how we tell lights to light up currect floor LED
-  lights.updateLightShiftRegister(aNum);
+  //this is how we tell lights to light up currect floor LED and elevator direction LED
+  if(aState == GOING_UP)
+  {
+    lights.comboLight(aNum,LED_UP);
+  }
+  else if(aState == GOING_DOWN)
+  {
+    lights.comboLight(aNum,LED_DOWN);
+  }
+  else
+  { //just sitting at floor no direction LED needed
+    lights.updateLightShiftRegister(aNum);
+  }
 }
 
 //basicly see if floor elevator is passing is in queue
 bool Controller::thisFloorInQueue()
 { 
   uint8_t tempCurrrentFloor = elevator.getCurrentFloor();
-  bool tempState= buttonQueue[tempCurrrentFloor-1].buttonState;
+  bool tempButtonState= buttonQueue[tempCurrrentFloor-1].buttonState;
   if(buttonQueue[tempCurrrentFloor-1].buttonState == true)
   {
     buttonQueue[tempCurrrentFloor-1].buttonState = false;   
   }
-  return tempState;
+  return tempButtonState;
 }
 
-//delay usage is temp will change to  millis()
+//delay usage is temp will change to  millis()....Eventually!!!
 void Controller::openDoor()
 {
   uint8_t tempCurrentFloor = elevator.getCurrentFloor();
   //the door LED is 0 when door open show both door and floor LED's
   //functions from lights.h
-  lights.comboLight(0,tempCurrentFloor);
+  lights.comboLight(tempCurrentFloor,LED_DOOR_OPEN);
   delay(3000);
   lights.updateLightShiftRegister(tempCurrentFloor); 
   delay(1000);
 }
 
-//this function/switch is like a lifecycle for the elevator in which its state dictates what it should be doing
+//this function/switch is the lifecycle of the elevator in which elevator.state decides actions
 //this is still work in progress
 void Controller::upDateElevator()
-{ 
-  ElevatorState tempState;
+{   
   switch(elevator.getState())
   {
     case NOT_IN_USE:
-      showCurrentFloor(elevator.getCurrentFloor());
-      elevator.setTargetFloor(getFloorRequest()); 
-      elevator.setState(PICK_TARGET_FLOOR);    
+      showCurrentFloor(elevator.getCurrentFloor(),elevator.getState());
+      elevator.setTargetFloor(getFloorRequest());
+      if(checkDoorRequest())
+      {
+        setTempElevatorState(elevator.getState());
+        elevator.setState(FLOOR_STOP); 
+      }
+      else
+      {
+        elevator.setState(PICK_TARGET_DIRECTION);
+      }         
       #ifdef DEBUG_CONTROLLER
         Serial.println("NOT IN USE");
         Serial.println("CURRENT FLOOR = "+String(elevator.getCurrentFloor()));
@@ -246,13 +316,14 @@ void Controller::upDateElevator()
       break;
     case GOING_UP:
       //show floor with LED, Digit, and Serial if debug is defined
-      showCurrentFloor(elevator.getCurrentFloor());
+      showCurrentFloor(elevator.getCurrentFloor(),elevator.getState());
       if(changeFloors())
       {
         //we check to see if this floor is in queue if so we simulate stopping
         if(thisFloorInQueue())
         {         
-          openDoor();
+          setTempElevatorState(elevator.getState());
+          elevator.setState(FLOOR_STOP); 
           #ifdef DEBUG_CONTROLLER
             Serial.println("GOING UP");
             Serial.println("SHOW FLOOR "+String(elevator.getCurrentFloor())+" LED + #");
@@ -265,6 +336,7 @@ void Controller::upDateElevator()
       }
       else
       {
+        setDoorRequest();
         elevator.setState(TARGET_REACHED);
       }
       #ifdef DEBUG_CONTROLLER
@@ -274,13 +346,14 @@ void Controller::upDateElevator()
       break;
     case GOING_DOWN:
       //show floor with LED, Digit, and Serial if debug is defined
-      showCurrentFloor(elevator.getCurrentFloor());
+      showCurrentFloor(elevator.getCurrentFloor(),elevator.getState());
       if(changeFloors())
       {
         //we check to see if this floor is in queue if so we simulate stopping
         if(thisFloorInQueue())
         {
-          openDoor();
+          setTempElevatorState(elevator.getState());
+          elevator.setState(FLOOR_STOP);
           #ifdef DEBUG_CONTROLLER
             Serial.println("FLOOR STOP");
             Serial.println("OPEN DOORS");
@@ -293,32 +366,46 @@ void Controller::upDateElevator()
       }
       else
       {
+        setDoorRequest();
         elevator.setState(TARGET_REACHED);
       }
       #ifdef DEBUG_CONTROLLER
         Serial.println("GOING DOWN");
         Serial.println("SHOW FLOOR "+String(elevator.getCurrentFloor())+" LED + #");
       #endif        
-      break;   
-    case PICK_TARGET_FLOOR:
-      tempState = getTargetDirection();
-      elevator.setState(tempState);
+      break;     
+      case FLOOR_STOP:
+      openDoor();
+      elevator.setState(getTempElevatorState());
       #ifdef DEBUG_CONTROLLER
-        Serial.println("PICKING TARGET FLOOR");
+        Serial.println("FLOOR_STOP");
+        Serial.println("YOU HAVE ARRIVED AT FLOOR "+String(elevator.getCurrentFloor()));
+      #endif         
+      break;   
+    case PICK_TARGET_DIRECTION:
+      elevator.setState(getTargetDirection());
+      #ifdef DEBUG_CONTROLLER
+        Serial.println("PICKING TARGET AND DIRECTION");
         Serial.println("NEW TARGET = "+String(elevator.getTargetFloor()));
       #endif         
       break;     
     case TARGET_REACHED:
-      openDoor();
-      elevator.setState(NOT_IN_USE);
+      if(checkDoorRequest())
+      {
+        setTempElevatorState(elevator.getState());
+        elevator.setState(FLOOR_STOP);
+      }
+      else
+      {
+        elevator.setState(NOT_IN_USE);
+      }     
       #ifdef DEBUG_CONTROLLER
         Serial.println("TARGET REACHED");
       #endif
       break;
     default:
-      Serial.println(": Huh?");
+      Serial.println("in upDateElevator: Huh?");
       break;
   }
 }
 #endif
-
