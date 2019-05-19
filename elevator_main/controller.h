@@ -310,7 +310,7 @@ void Controller::upDateElevator()
         elevator.setState(PICK_TARGET_DIRECTION);
       }         
       #ifdef DEBUG_CONTROLLER
-        Serial.println("NOT IN USE");
+        Serial.println("STATE = NOT IN USE");
         Serial.println("CURRENT FLOOR = "+String(elevator.getCurrentFloor()));
       #endif  
       break;
@@ -323,11 +323,7 @@ void Controller::upDateElevator()
         if(thisFloorInQueue())
         {         
           setTempElevatorState(elevator.getState());
-          elevator.setState(FLOOR_STOP); 
-          #ifdef DEBUG_CONTROLLER
-            Serial.println("GOING UP");
-            Serial.println("SHOW FLOOR "+String(elevator.getCurrentFloor())+" LED + #");
-          #endif          
+          elevator.setState(FLOOR_STOP);    
         }
         else
         {
@@ -340,7 +336,7 @@ void Controller::upDateElevator()
         elevator.setState(TARGET_REACHED);
       }
       #ifdef DEBUG_CONTROLLER
-        Serial.println("GOING UP");
+        Serial.println("STATE = GOING UP");
         Serial.println("SHOW FLOOR "+String(elevator.getCurrentFloor())+" LED + #");
       #endif        
       break;
@@ -353,11 +349,7 @@ void Controller::upDateElevator()
         if(thisFloorInQueue())
         {
           setTempElevatorState(elevator.getState());
-          elevator.setState(FLOOR_STOP);
-          #ifdef DEBUG_CONTROLLER
-            Serial.println("FLOOR STOP");
-            Serial.println("OPEN DOORS");
-          #endif         
+          elevator.setState(FLOOR_STOP);        
         }
         else
         {
@@ -370,7 +362,7 @@ void Controller::upDateElevator()
         elevator.setState(TARGET_REACHED);
       }
       #ifdef DEBUG_CONTROLLER
-        Serial.println("GOING DOWN");
+        Serial.println("STATE = GOING DOWN");
         Serial.println("SHOW FLOOR "+String(elevator.getCurrentFloor())+" LED + #");
       #endif        
       break;     
@@ -378,14 +370,14 @@ void Controller::upDateElevator()
       openDoor();
       elevator.setState(getTempElevatorState());
       #ifdef DEBUG_CONTROLLER
-        Serial.println("FLOOR_STOP");
-        Serial.println("YOU HAVE ARRIVED AT FLOOR "+String(elevator.getCurrentFloor()));
+        Serial.println("STATE = FLOOR_STOP");
+        Serial.println("DOORS OPEN ON FLOOR "+String(elevator.getCurrentFloor()));
       #endif         
       break;   
     case PICK_TARGET_DIRECTION:
       elevator.setState(getTargetDirection());
       #ifdef DEBUG_CONTROLLER
-        Serial.println("PICKING TARGET AND DIRECTION");
+        Serial.println("STATE = PICKING TARGET DIRECTION");
         Serial.println("NEW TARGET = "+String(elevator.getTargetFloor()));
       #endif         
       break;     
@@ -400,7 +392,8 @@ void Controller::upDateElevator()
         elevator.setState(NOT_IN_USE);
       }     
       #ifdef DEBUG_CONTROLLER
-        Serial.println("TARGET REACHED");
+        Serial.println("STATE = TARGET REACHED");
+        Serial.println("WELCOME TO FLOOR "+String(elevator.getCurrentFloor()));
       #endif
       break;
     default:
