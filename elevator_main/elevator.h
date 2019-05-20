@@ -20,7 +20,7 @@ class Elevator
 
         //setters for private members
         void setNumFloors(uint8_t aNum);
-        void setState(uint8_t aState);
+        void setState(ElevatorState aState);
         void setTargetFloor(uint8_t aTargetFloor);
         void increaseCurrentFloor();
         void decreaseCurrentFloor();
@@ -44,10 +44,7 @@ Elevator::Elevator()
     numFloors = 0;
     elevatorState = NOT_IN_USE;
     currentFloor = 1;
-    targetFloor = 1;
-    #ifdef DEBUG_ELEVATOR
-        Serial.println("Elevator Ready");
-    #endif  
+    targetFloor = 1;     
 }
 
 Elevator::~Elevator(void) 
@@ -61,9 +58,12 @@ Elevator::~Elevator(void)
 void Elevator::setNumFloors(uint8_t aNum) 
 {
     numFloors = aNum;
+    #ifdef DEBUG_ELEVATOR
+        Serial.println("Elevator Ready");
+    #endif
 }
 
-void Elevator::setState(uint8_t aState) 
+void Elevator::setState(ElevatorState aState) 
 {
     elevatorState = aState;
 }

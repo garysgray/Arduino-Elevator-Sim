@@ -17,6 +17,11 @@ Update: Got the elevator life cycle working much more like a real elevator with 
 Update: really just a ton of clean up, finally made controller a class and basicly made it so it holds all the key elements. Now updateElevator gets called as a controller object called from main loop().
 Everything else is a class now as well. Cleaned up controllers elevator update a lot. Its a lot easier to follow now. Still a little bit of repative/long code but untill life cycle is completly figured out its easier to follow. Then later wrap repative code in functions. Also added the function calls to have a LED light up for elevator direction while its moving along with Floor LED. pretty cool
 
+5/20/19
+Update: Cleaned up some more code. also added in the different mode buttons functionality. so now non-floor button presses can change the mode of the controller. For example
+pushing the FIRE button will make it so elevator will automaticlly start going to floor 1 and stop and open doors on each floor. Elevator no longer takes floor requests and once its
+on floor 1 it stays there untill FIRE button is pressed again, then it goes into NORMAL mode again.
+
 Where to find diagrams:
 
 BUTTONS : https://www.instructables.com/id/Driving-Dozens-of-Buttons/,

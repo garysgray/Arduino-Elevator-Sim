@@ -34,6 +34,7 @@ class Buttons
       // returns a ButtonAction.when you read the current button action, the action is reset to NONE for that button
       ButtonAction getButtonAction(uint8_t whichButton);
       void setUpButtons(uint8_t numButtons);
+      uint8_t getNumberOfButtons();
   private:
       uint8_t numButtons = 0;
       uint8_t strobeCurButton =0;
@@ -60,6 +61,11 @@ Buttons::~Buttons(void)
 }
 
 //*** Functions **//
+uint8_t Buttons::getNumberOfButtons()
+{
+  return numButtons;
+}
+
 void Buttons::setUpButtons(uint8_t aNum)
 {
   numButtons = aNum; 

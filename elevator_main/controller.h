@@ -7,7 +7,6 @@
 #include "lights.h"
 
 #define DEBUG_CONTROLLER
-#define NUM_OF_FLOORS 5
 
 //this file "controller.h" is currently doing a lot of heavy lifting because its keeps the main loop code cleaner
 //some code might get delegated somewhere else or reconstructed in a better way....eventually!!!!
@@ -25,45 +24,56 @@ typedef struct InputHolder
 
 //order in which the buttons are laid out I use this when doing LED combinations
 enum LED_TYPE { LED_DOOR_OPEN, LED_FLOOR_1, LED_FLOOR_2, LED_FLOOR_3, LED_FLOOR_4, LED_FLOOR_5, LED_UP, LED_DOWN };
+enum ButtonType { BUTTON_F1, BUTTON_F2, BUTTON_F3, BUTTON_F4, BUTTON_F5, BUTTON_FIRE, BUTTON_STOP ,BUTTON_NO_SERVICE};
+enum ControllerState { NORMAL, FIRE, STOP, NO_SERVICE};
 
 class Controller
 {
   public:
-    //constructors
+    //CONSTRUCTORS
     Controller();
     ~Controller(void);
-
-    void setDoorRequest();
-    bool checkDoorRequest();
-    void setTempElevatorState(ElevatorState aState);
-    ElevatorState getTempElevatorState();
+    
+    //SET UP SYSTEMS
     void setElevatorFloorNum(uint8_t aNum);
     void setUpButtons(uint8_t aNum);
     void setUpLights();
     void setUpDigital();
+
+    //SETTERS
+    void setDoorRequest();
+    void setTempElevatorState(ElevatorState aState);
+    void setControllerState(ControllerState aState);
+    
+    //GETTERS
+    bool checkDoorRequest();    
+    ElevatorState getTempElevatorState();    
+    ControllerState getControllerState();
+
+    //MAIN LOOP FUNCTIONS
     void upDateButtons();
     void checkButtons();
-    void addFloorRequest(uint8_t aButtonNum);
-    uint8_t getFloorRequest();
+    void addRequest(uint8_t aButtonNum);
+    uint8_t getModeRequest();
+    uint8_t getFloorRequest();    
     ElevatorState getTargetDirection();
     bool changeFloors();
     void showCurrentFloor(uint8_t aNum,ElevatorState aState);
-    bool thisFloorInQueue();
+    bool isThisFloorInQueue();
     void openDoor();
     void upDateElevator();
         
   private:
     //this will be the que that we feed floor requests from checkButtons()
     InputHolder buttonQueue[8];
-    //temp way of doing this till expermint code is done
-    uint8_t numOfFloors = 5;
     Lights lights;
     Digital digital;
     Buttons buttons;
     Elevator elevator;
     int buttonCounter = 0;
     bool doorRequest = false;
-    ElevatorState tempElevatorState = NOT_IN_USE;  
+    ElevatorState tempElevatorState = NOT_IN_USE;
+    ControllerState controllerState = NORMAL;  
 };
 
 //***   Constructor functions   **//
@@ -81,31 +91,10 @@ Controller::~Controller(void)
   #endif  
 }
 
-void Controller::setDoorRequest()
-{
-  doorRequest = true;
-}
-bool Controller::checkDoorRequest()
-{
-  bool tempDoorRequest = doorRequest;
-  doorRequest = false;
-  return tempDoorRequest;  
-}
-void Controller::setTempElevatorState(ElevatorState aState)
-{
-  tempElevatorState = aState;
-}
-ElevatorState Controller::getTempElevatorState()
-{
-  return tempElevatorState;
-}
-
+//***   SET UP SYSTEMS   **//
 void Controller::setElevatorFloorNum(uint8_t aNum)
 {
   elevator.setNumFloors(aNum);
-  #ifdef DEBUG_CONTROLLER
-    Serial.println("Elevator ready.");
-  #endif 
 }
 
 void Controller::setUpButtons(uint8_t aNum)
@@ -123,6 +112,42 @@ void Controller::setUpDigital()
   digital.setUpDigital();
 }
 
+//***   SETTERS   **//
+void Controller::setDoorRequest()
+{
+  doorRequest = true;
+}
+
+void Controller::setTempElevatorState(ElevatorState aState)
+{
+  tempElevatorState = aState;
+}
+
+void Controller::setControllerState(ControllerState aState)
+{
+  controllerState = aState;
+}
+
+//***   GETTERS  **//
+//sets to false auto when user checks it
+bool Controller::checkDoorRequest()
+{
+  bool tempDoorRequest = doorRequest;
+  doorRequest = false;
+  return tempDoorRequest;  
+}
+
+ElevatorState Controller::getTempElevatorState()
+{
+  return tempElevatorState;
+}
+
+ControllerState Controller::getControllerState()
+{
+  return controllerState;
+}
+
+//***   MAIN LOOP FUNCTIONS   **//
 void Controller::upDateButtons()
 {
   buttons.callEveryLoop();
@@ -131,7 +156,7 @@ void Controller::upDateButtons()
 //this is where our entry for where que will get called when a button is pressed
 void Controller::checkButtons() 
 {
-  for (uint8_t i = 0; i < elevator.getNumberOfFloors(); i++) 
+  for (uint8_t i = 0; i < buttons.getNumberOfButtons(); i++) 
   {
     uint8_t action = buttons.getButtonAction(i);
     if (action != None) 
@@ -141,7 +166,7 @@ void Controller::checkButtons()
         case Up:
           break;
         case Down:                           
-          addFloorRequest(i);
+          addRequest(i);
           buttonCounter++;
           #ifdef DEBUG_CONTROLLER           
             Serial.println("BUTTON "+String(i+1)+" Down!");
@@ -156,17 +181,121 @@ void Controller::checkButtons()
   }
 }
 
-//this gets called when user presses button in check buttons function
-//may pass other info if needed e.g. timevalue
-void Controller::addFloorRequest(uint8_t aButtonNum)
+//addRequest is also now a place where requests get filtered based on what type it is  floor or mode
+//e.g. if controller is in fire mode only mode buttons will get responses/requests
+//becuse we dont want floor request during that time.
+void Controller::addRequest(uint8_t aButtonNum)
 {
-  buttonQueue[aButtonNum].buttonState = true;  
+  if(getControllerState()== NORMAL)
+  {
+    buttonQueue[aButtonNum].buttonState = true;
+  }
+  ///we may not want user floor requests but still want mode buttons
+  else if(getControllerState() == STOP || getControllerState()== NO_SERVICE)
+  {
+    if(aButtonNum >= elevator.getNumberOfFloors())
+    {
+      buttonQueue[aButtonNum].buttonState = true;
+    }
+  }
+  else if(getControllerState() == FIRE)
+  {
+    //floor requests lower then elevator to force going down, but still need mode buttons
+    if(aButtonNum < elevator.getCurrentFloor()||aButtonNum >= elevator.getNumberOfFloors())
+    {
+      buttonQueue[aButtonNum].buttonState = true;
+    }
+  }
+  //so if a mode button gets pushed we deal with it in this function
+  getModeRequest();
 }
 
-//this will be called from the elevator update function
-//for now it gets called when elevator is in NOT IN USE state
-//button count starts at 0, but floor count starts at 1
-//so we and add 1 to the floor value we return from queue
+//this is where non floor request buttons "Mode buttons" wil get told what to do when pressed
+//for example fire mode, we shoudl set the target to floor 1 have it hit each floor on way down
+//so we fill the Queue which is why que needs a little more functinality
+//when back to normal mode, set target to current floor and empty queue
+uint8_t Controller::getModeRequest()
+{
+  for(uint8_t i = elevator.getNumberOfFloors(); i < buttons.getNumberOfButtons();i++)
+  {
+    if(buttonQueue[i].buttonState == true)
+    {
+      switch(i)
+      {
+        case BUTTON_FIRE:
+        //we set the target to floor 1 and fill the Queue to hit each floor down
+        //we set the addRequest() to not take floor request during Fire Mode as well
+        //when set back to normal set current floor to target and empty queue
+        if(getControllerState()!= FIRE)
+        {
+          setControllerState(FIRE);
+          for(uint8_t i =1;i< elevator.getCurrentFloor();i++)
+          {
+            buttonQueue[i].buttonState = true;
+          }  
+          elevator.setTargetFloor(1);
+          #ifdef DEBUG_CONTROLLER           
+            Serial.println("CONTROLLER FIRE MODE");
+          #endif
+        }
+        else
+        {
+          setControllerState(NORMAL);
+          elevator.setTargetFloor(elevator.getCurrentFloor());
+          for(uint8_t i =0;i< elevator.getNumberOfFloors();i++)
+          {
+            buttonQueue[i].buttonState = false;
+          }  
+          #ifdef DEBUG_CONTROLLER           
+            Serial.println("CONTROLLER NORMAL MODE");           
+          #endif 
+        }        
+        break;
+        case BUTTON_STOP:
+          if(getControllerState()!= STOP)
+        {
+          setControllerState(STOP);
+          #ifdef DEBUG_CONTROLLER           
+            Serial.println("CONTROLLER STOP MODE");
+          #endif
+        }
+        else
+        {
+          setControllerState(NORMAL);
+          #ifdef DEBUG_CONTROLLER           
+            Serial.println("CONTROLLER NORMAL MODE");
+          #endif
+
+        }
+        break;
+        case BUTTON_NO_SERVICE:
+          if(getControllerState()!= NO_SERVICE)
+        {
+          setControllerState(NO_SERVICE);
+          #ifdef DEBUG_CONTROLLER           
+            Serial.println("CONTROLLER NO SERVICE MODE");
+          #endif
+        }
+        else
+        {
+          setControllerState(NORMAL);
+          #ifdef DEBUG_CONTROLLER           
+            Serial.println("CONTROLLER NORMAL MODE");
+          #endif
+        }
+        break;
+        default:
+        Serial.println("in getModeRequest: Huh?");
+        break;
+      }
+    }
+    //what ever button set it to false now so code does not repeat
+    buttonQueue[i].buttonState = false;
+  }
+}
+
+//this gets called when elevator is in NOT IN USE state
+//buttons start at 0, floor count starts at 1 so we and add 1  return floor from queue
 uint8_t Controller::getFloorRequest()
 {
   uint8_t tempCurrentFloor = elevator.getCurrentFloor();
@@ -181,25 +310,23 @@ uint8_t Controller::getFloorRequest()
       //but have floor value we can test with or pass
       uint8_t tempIndex = i;
       
-      //if elevator is on same floor as request already, take floor out of queue,
-      //open the door and return the current floor back
+      //if elevator is on same floor as request already, take floor out of queue, and open doors
+      //current floor gets returned as target floor
       if(++tempIndex == tempCurrentFloor)
       {
         //take floor out of queue
-        buttonQueue[i].buttonState = false;
-        
+        buttonQueue[i].buttonState = false;       
         setDoorRequest();
         return tempCurrentFloor;
       }
-      else //other floors where requested
+      else //other floors where requested so get the delta
       {
-        //we need to know if this routine or actual button press//elevator loops thru cycle for now it 
-        //always button checks even when none presses this helps with that
+        //we need to know if this looproutine or actual button press
         buttonPush = true;
         tempIndex = i;
-        //get the differance between current floor and requested floor
-        //and compare, biggest gets saved and used to get correct index
-        uint8_t delta = abs(tempCurrentFloor - ++tempIndex);
+        tempIndex++;
+        //biggestDelta gets saved and used to get correct index
+        uint8_t delta = abs(tempCurrentFloor - tempIndex);
         if(delta > biggestDelta)
         {
           biggestDelta = delta;
@@ -208,15 +335,15 @@ uint8_t Controller::getFloorRequest()
       }     
     }
   }
-  //this means an actual button on another floor was pressed
+  //this helps confirm biggest delta was from a user on another floor, so we make it the target floor
   if(buttonPush == true)
   {
     //take out of queue basiclly
     buttonQueue[biggestDeltaIndex].buttonState = false;
-    //increase so floor count is right on return
+    //increase index so floor count is correct on return
     return ++biggestDeltaIndex;
   }
-  else //elavtor was checking loop, no buttons where pushed return currentFloor back as is
+  else //elavtor was checking loop, no buttons where pushed return currentFloor back as target
   {
     return tempCurrentFloor;
   }  
@@ -268,7 +395,7 @@ void Controller::showCurrentFloor(uint8_t aNum,ElevatorState aState)
 }
 
 //basicly see if floor elevator is passing is in queue
-bool Controller::thisFloorInQueue()
+bool Controller::isThisFloorInQueue()
 { 
   uint8_t tempCurrrentFloor = elevator.getCurrentFloor();
   bool tempButtonState= buttonQueue[tempCurrrentFloor-1].buttonState;
@@ -305,10 +432,7 @@ void Controller::upDateElevator()
         setTempElevatorState(elevator.getState());
         elevator.setState(FLOOR_STOP); 
       }
-      else
-      {
-        elevator.setState(PICK_TARGET_DIRECTION);
-      }         
+      else{elevator.setState(PICK_TARGET_DIRECTION);}         
       #ifdef DEBUG_CONTROLLER
         Serial.println("STATE = NOT IN USE");
         Serial.println("CURRENT FLOOR = "+String(elevator.getCurrentFloor()));
@@ -320,21 +444,14 @@ void Controller::upDateElevator()
       if(changeFloors())
       {
         //we check to see if this floor is in queue if so we simulate stopping
-        if(thisFloorInQueue())
+        if(isThisFloorInQueue())
         {         
           setTempElevatorState(elevator.getState());
           elevator.setState(FLOOR_STOP);    
         }
-        else
-        {
-           elevator.increaseCurrentFloor();   
-        }  
+        else{elevator.increaseCurrentFloor();} 
       }
-      else
-      {
-        setDoorRequest();
-        elevator.setState(TARGET_REACHED);
-      }
+      else{setDoorRequest();elevator.setState(TARGET_REACHED);}      
       #ifdef DEBUG_CONTROLLER
         Serial.println("STATE = GOING UP");
         Serial.println("SHOW FLOOR "+String(elevator.getCurrentFloor())+" LED + #");
@@ -346,21 +463,14 @@ void Controller::upDateElevator()
       if(changeFloors())
       {
         //we check to see if this floor is in queue if so we simulate stopping
-        if(thisFloorInQueue())
+        if(isThisFloorInQueue())
         {
           setTempElevatorState(elevator.getState());
           elevator.setState(FLOOR_STOP);        
         }
-        else
-        {
-           elevator.decreaseCurrentFloor();   
-        }  
+        else{elevator.decreaseCurrentFloor();}  
       }
-      else
-      {
-        setDoorRequest();
-        elevator.setState(TARGET_REACHED);
-      }
+      else{setDoorRequest(); elevator.setState(TARGET_REACHED);}
       #ifdef DEBUG_CONTROLLER
         Serial.println("STATE = GOING DOWN");
         Serial.println("SHOW FLOOR "+String(elevator.getCurrentFloor())+" LED + #");
@@ -387,10 +497,7 @@ void Controller::upDateElevator()
         setTempElevatorState(elevator.getState());
         elevator.setState(FLOOR_STOP);
       }
-      else
-      {
-        elevator.setState(NOT_IN_USE);
-      }     
+      else{elevator.setState(NOT_IN_USE);}     
       #ifdef DEBUG_CONTROLLER
         Serial.println("STATE = TARGET REACHED");
         Serial.println("WELCOME TO FLOOR "+String(elevator.getCurrentFloor()));

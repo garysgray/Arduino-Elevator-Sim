@@ -9,6 +9,7 @@
 ////****FOR MAIN***// 
 #define DELAY_INTERVAL 4000
 #define NUM_OF_FLOORS 5
+#define NUM_OF_BUTTONS 8
 
 //controller file is currently doing a lot of heavy lifting because its keeps the main loop code cleaner
 //most of that code will eventually be delegated somewhere else or reconstructed in a better way
@@ -40,7 +41,7 @@ void setup()
   
   //set up sub-systems 
   controller.setElevatorFloorNum(NUM_OF_FLOORS); 
-  controller.setUpButtons(NUM_OF_FLOORS);  
+  controller.setUpButtons(NUM_OF_BUTTONS);  
   controller.setUpLights(); 
   controller.setUpDigital();  
 }
