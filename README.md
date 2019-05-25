@@ -22,6 +22,9 @@ Update: Cleaned up some more code. also added in the different mode buttons func
 pushing the FIRE button will make it so elevator will automaticlly start going to floor 1 and stop and open doors on each floor. Elevator no longer takes floor requests and once its
 on floor 1 it stays there untill FIRE button is pressed again, then it goes into NORMAL mode again.
 
+5/25/19
+Update: Biggest change is in the way the LED's work now. They originally where used to indicate which floor elevator was on. Now its used to represent floors in the queue from button presses, ha which makes sense. Also added a passive buzzer which makes a chirp when floor stops and more of a buzz when mode/service buttons pushed. Anorther change is that modes are working  as my frined had requested. Upon mode button presses the elevator goes into FIRE_1 or FIRE_2 mode which forces eleveator to go to designated floors and stay there. As always a little more code clean up as well. Mainly fixing parts where I not passing inn whole objects, just need values.  
+
 Where to find diagrams:
 
 BUTTONS : https://www.instructables.com/id/Driving-Dozens-of-Buttons/,

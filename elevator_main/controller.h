@@ -1,6 +1,8 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
+#include "pitches.h"
+
 #include "digital.h"
 #include "buttons.h"
 #include "elevator.h"
@@ -9,7 +11,7 @@
 #define DEBUG_CONTROLLER
 
 ////****FOR MAIN***// 
-#define DELAY_INTERVAL 1500
+#define DELAY_INTERVAL 1000
 #define NUM_OF_FLOORS  5
 #define NUM_OF_BUTTONS 8
 
@@ -27,10 +29,14 @@
 #define FLOOR_1 1
 #define FLOOR_2 2
 
-//this file "controller.h" is currently doing a lot of heavy lifting because its keeps the main loop code cleaner
-//some code might get delegated somewhere else or reconstructed in a better way....eventually!!!!
+////****FOR SOUND***//
+#define SOUND_PIN        12
+#define SOUND_NOTE_DOOR  4000
+#define SOUND_NOTE_MODE  1000
+#define SOUND_DELAY 300
+
+//this file "controller.h" is doing a lot of heavy lifting, it holds main objects to make things work
 //controller will get called/used thru thru main file. 
-//a few of these functions are still prototypes and are for testing/development
 
 //holds info abut what button was pushed for queue, button state being the most important
 //others members may get used based on how efficiant we want the queue to work
@@ -41,6 +47,7 @@ typedef struct InputHolder
   long timeStamp;  
 } InputHolder;
 
+//keeps tarck of controller state, this is how we change 'elevator mode'
 enum ControllerState { NORMAL, FIRE_1, FIRE_2, NO_SERVICE};
 
 class Controller
@@ -78,6 +85,7 @@ class Controller
     void showCurrentFloor(uint8_t aNum,ElevatorState aState);
     bool isThisFloorInQueue(uint8_t tempCurrrentFloor);
     void openDoor(uint8_t tempCurrentFloor);
+    void makeSound(int pin,int sound,int delayValue);
     void resetQues();
     void upDateElevator();
     
@@ -199,12 +207,15 @@ void Controller::checkButtons()
       }
     }
   }
-}//after user pushes floor buttons we call this outside update elevator
+}
+
+//after user pushes floor buttons we call this outside update elevator
 void Controller::displayAllLights()
 {
   lights.displayLights();
 }
 
+//certain stage in elevator update we turn these off when elevator reaches target
 void Controller::turnOffDirectionLights()
 {
   lights.setOffLightQue(UP_LED);
@@ -213,7 +224,7 @@ void Controller::turnOffDirectionLights()
 
 //addRequest is also now a place where requests get filtered based on what type it is  floor or mode
 //e.g. if controller is in fire mode only mode buttons will get responses/requests
-//becuse we dont want floor request during that time.
+//becuse we dont want floor requests during that time.
 void Controller::addRequest(uint8_t aButtonNum)
 {
   if(getControllerState()== NORMAL)
@@ -238,15 +249,16 @@ void Controller::addRequest(uint8_t aButtonNum)
 }
 
 //this is where non floor request buttons "Mode buttons" wil get told what to do when pressed
-//for example fire mode, we shoudl set the target to floor 1 have it hit each floor on way down
-//so we fill the Queue which is why que needs a little more functinality
-//when back to normal mode, set target to current floor and empty queue
+//for example fire mode, we shoudl set the target to floor 1 no stopping
 uint8_t Controller::getModeRequest()
 {
   for(uint8_t i = NUM_OF_FLOORS; i < NUM_OF_BUTTONS;i++)
   {
     if(buttonQueue[i].buttonState == true)
     {
+      //noise that indicates mode button presses
+      makeSound(SOUND_PIN, SOUND_NOTE_MODE, SOUND_DELAY);
+      
       switch(i)
       {
         case BUTTON_FIRE_1:
@@ -257,17 +269,11 @@ uint8_t Controller::getModeRequest()
           elevator.setTargetFloor(FLOOR_1);
           lights.setOnLightQue(FLOOR_1);
           elevator.setState(GOING_DOWN);         
-          #ifdef DEBUG_CONTROLLER           
-            Serial.println("CONTROLLER FIRE MODE");
-          #endif
         }
         else
         {
           setControllerState(NORMAL);
           elevator.setTargetFloor(elevator.getCurrentFloor());         
-          #ifdef DEBUG_CONTROLLER           
-            Serial.println("CONTROLLER NORMAL MODE");           
-          #endif 
         }        
         break;
         case BUTTON_FIRE_2:
@@ -282,17 +288,11 @@ uint8_t Controller::getModeRequest()
             elevator.setState(GOING_DOWN);
             lights.setOnLightQue(FLOOR_2);
           }          
-          #ifdef DEBUG_CONTROLLER           
-            Serial.println("CONTROLLER STOP MODE");
-          #endif
         }
         else
         {
           setControllerState(NORMAL);
           elevator.setTargetFloor(elevator.getCurrentFloor());
-          #ifdef DEBUG_CONTROLLER           
-            Serial.println("CONTROLLER NORMAL MODE");
-          #endif
         }
         break;
         case BUTTON_NO_SERVICE:
@@ -304,9 +304,6 @@ uint8_t Controller::getModeRequest()
           //setDoorRequest();
           elevator.setState(TARGET_REACHED);
           //lights.setOnLightQue(elevator.getCurrentFloor());
-          #ifdef DEBUG_CONTROLLER           
-            Serial.println("CONTROLLER NO SERVICE MODE");
-          #endif
         }
         else
         {
@@ -314,9 +311,6 @@ uint8_t Controller::getModeRequest()
           elevator.setTargetFloor(elevator.getCurrentFloor());
           //lights.setOffLightQue(elevator.getCurrentFloor());
           elevator.setState(NOT_IN_USE);
-          #ifdef DEBUG_CONTROLLER           
-            Serial.println("CONTROLLER NORMAL MODE");
-          #endif
         }
         break;
         default:
@@ -418,7 +412,7 @@ void Controller::showCurrentFloor(uint8_t aNum,ElevatorState aState)
 }
 
 //basicly see if floor elevator is passing is in queue
-//if it is we set it to false
+//if it is we return bool, then set this to false to take it out of que
 bool Controller::isThisFloorInQueue(uint8_t tempCurrrentFloor)
 { 
   bool tempButtonState= buttonQueue[tempCurrrentFloor-1].buttonState;
@@ -439,13 +433,20 @@ void Controller::openDoor(uint8_t tempCurrentFloor)
   
   lights.setOffLightQue(tempCurrentFloor);
   lights.setOnLightQue(OPEN_DOOR_LED);
-  
   while(delta < DELAY_INTERVAL)
   { 
-    lights.displayLights();   
+    lights.displayLights();
+       
     delta = abs((now= millis()) - then);
   } 
   lights.setOffLightQue(OPEN_DOOR_LED); 
+}
+
+//makes sounds for key event notifications 
+//wrapped it in function for readability
+void Controller::makeSound(int pin,int sound,int delayValue)
+{
+  tone(pin, sound, delayValue);
 }
 
 //helps clears out the fllor and LED ques when we need to change controller modes
@@ -519,6 +520,7 @@ void Controller::upDateElevator()
       #endif        
       break;     
       case FLOOR_STOP:
+      makeSound(SOUND_PIN, SOUND_NOTE_DOOR, SOUND_DELAY);
       openDoor(elevator.getCurrentFloor());
       elevator.setState(getTempElevatorState());
       
