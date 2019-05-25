@@ -15,21 +15,15 @@ class Lights
         //constructors
         Lights();
         ~Lights(void);      
-        void comboLight(uint8_t aBit1,uint8_t aBit2);
-        void updateLightShiftRegister(byte aDigit);
-        void setUpLights();       
+              
+        void setUpLights();         
+        void setOnLightQue(uint8_t aBit);
+        void setOffLightQue(uint8_t aBit);
+        void displayLights();
+                      
     private:
-    byte    lightsArray[8] = 
-    { 
-        B10000000,  // = OPEN DOOR
-        B01000000,  // = 1
-        B00100000,  // = 2
-        B00010000,  // = 3
-        B00001000,  // = 4
-        B00000100,  // = 5
-        B00000010,  // = UP
-        B00000001,  // = DOWN
-    };
+    byte    lightsQueue;
+    
 };
 //***   Constructor functions   **//
 Lights::Lights()
@@ -54,22 +48,38 @@ void Lights::setUpLights()
       Serial.println("Lights ready.");
   #endif
 }
-void Lights::updateLightShiftRegister(byte aDigit)
+
+void Lights::setOnLightQue(uint8_t aBit)
 {
-   digitalWrite(LIGHTS_LATCH_PIN, LOW);
-   shiftOut(LIGHTS_DATA_PIN, LIGHTS_CLOCK_PIN, LSBFIRST, lightsArray[aDigit]);
-   digitalWrite(LIGHTS_LATCH_PIN, HIGH);
+  bitWrite(lightsQueue, aBit, HIGH);
 }
 
-//LED's order go left-right 
-//Need MSBFIRST to make this work or combo is backwards
-void Lights::comboLight(uint8_t aBit1,uint8_t aBit2)
+void Lights::setOffLightQue(uint8_t aBit)
 {
-  byte bitBuffer = 0;
-  bitWrite(bitBuffer, aBit1, HIGH);
-  bitWrite(bitBuffer, aBit2, HIGH);
+  bitWrite(lightsQueue, aBit, LOW);
+}
+
+void Lights::displayLights()
+{
   digitalWrite(LIGHTS_LATCH_PIN, LOW);
-  shiftOut(LIGHTS_DATA_PIN, LIGHTS_CLOCK_PIN, MSBFIRST , bitBuffer);
+  shiftOut(LIGHTS_DATA_PIN, LIGHTS_CLOCK_PIN, MSBFIRST , lightsQueue);
   digitalWrite(LIGHTS_LATCH_PIN, HIGH);
 }
+
 #endif
+
+/*
+{ 
+        B10000000,  // = OPEN DOOR
+        B01000000,  // = 1
+        B00100000,  // = 2
+        B00010000,  // = 3
+        B00001000,  // = 4
+        B00000100,  // = 5
+        B00000010,  // = UP
+        B00000001,  // = DOWN
+    };
+
+    
+*/
+

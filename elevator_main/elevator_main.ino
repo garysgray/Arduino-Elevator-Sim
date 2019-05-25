@@ -6,11 +6,6 @@
 #define DEBUG_MAIN 
 #define SERIAL_BAUD 115200
  
-////****FOR MAIN***// 
-#define DELAY_INTERVAL 4000
-#define NUM_OF_FLOORS 5
-#define NUM_OF_BUTTONS 8
-
 //controller file is currently doing a lot of heavy lifting because its keeps the main loop code cleaner
 //most of that code will eventually be delegated somewhere else or reconstructed in a better way
 //possibly controller will eventually hold all the objects(elevator,buttons,light,digital) and then
@@ -57,6 +52,7 @@ void loop()
     previousMillis = currentMillis;
   } 
   controller.upDateButtons();
-  controller.checkButtons();       
+  controller.checkButtons();
+  controller.displayAllLights();       
 }
 
