@@ -164,7 +164,7 @@ void Controller::upDateRequests()
           break;
         case Down:                           
           addRequest(i);
-          upDateController();
+          checkModeRequest();
           buttons.increaseButtonCount();
           #ifdef DEBUG_CONTROLLER           
             Serial.println("BUTTON "+String(i+1)+" Down!");
