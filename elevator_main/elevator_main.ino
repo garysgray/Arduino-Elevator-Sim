@@ -34,7 +34,7 @@ void setup()
   //Wire library used for buttons.h
   Wire.begin();
   
-  //set up sub-systems 
+  //set up systems 
   controller.setElevatorFloorNum(NUM_OF_FLOORS); 
   controller.setUpButtons(NUM_OF_BUTTONS);  
   controller.setUpLights(); 
@@ -48,11 +48,11 @@ void loop()
   unsigned long currentMillis = millis();    
   if ((unsigned long)(currentMillis - previousMillis) >= DELAY_INTERVAL) 
   {
+    //update function that runs elevator
     controller.upDateElevator();
     previousMillis = currentMillis;
-  } 
-  controller.upDateButtons();
-  controller.checkButtons();
-  controller.displayAllLights();       
+  }
+  //update all other systems 
+  controller.upDateController();      
 }
 

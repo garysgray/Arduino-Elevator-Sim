@@ -29,12 +29,21 @@ class Buttons
       Buttons(unsigned long delay = DEFAULT_DELAY_MILLIS);
 
       ~Buttons(void);
-      // this MUST BE CALLED EVERY LOOP in your script, or class will work properly!
-      void callEveryLoop();
+
+      //*** setup **//
+      void setUpButtons(uint8_t numButtons);
+
+      //*** getters **//
       // returns a ButtonAction.when you read the current button action, the action is reset to NONE for that button
       ButtonAction getButtonAction(uint8_t whichButton);
-      void setUpButtons(uint8_t numButtons);
       uint8_t getNumberOfButtons();
+      unsigned int getButtonCount();
+
+      //*** functions **//
+      // this MUST BE CALLED EVERY LOOP in your script, or class will work properly!
+      void callEveryLoop();
+      void increaseButtonCount();
+      
   private:
       uint8_t numButtons = 0;
       uint8_t strobeCurButton =0;
@@ -43,6 +52,7 @@ class Buttons
       // malloc'd dynamically in constructor.
       ButtonContext *buttonContexts;
       uint8_t *strobeNextButton;
+      unsigned int buttonCounter = 0;
 };
 
 //*** constructors **//
@@ -60,12 +70,7 @@ Buttons::~Buttons(void)
       free(buttonContexts);
 }
 
-//*** Functions **//
-uint8_t Buttons::getNumberOfButtons()
-{
-  return numButtons;
-}
-
+//*** setup **//
 void Buttons::setUpButtons(uint8_t aNum)
 {
   numButtons = aNum; 
@@ -109,6 +114,7 @@ void Buttons::setUpButtons(uint8_t aNum)
   #endif
 }
 
+//*** getters **//
 ButtonAction Buttons::getButtonAction(uint8_t whichButton) 
 {
     // sanity check.
@@ -122,6 +128,17 @@ ButtonAction Buttons::getButtonAction(uint8_t whichButton)
     return action;
 }
 
+uint8_t Buttons::getNumberOfButtons()
+{
+  return numButtons;
+}
+
+unsigned int Buttons::getButtonCount()
+{
+  return buttonCounter;
+}
+
+//*** functions **//
 //*** loop that gets called in main loop **//
 void Buttons::callEveryLoop() 
 {
@@ -154,5 +171,10 @@ void Buttons::callEveryLoop()
         // set timeout for next button check.
         checkButtonTimeout = millis() + delayMillis;
     }
-}   
+} 
+
+void Buttons::increaseButtonCount()
+{
+  buttonCounter++;
+}
 #endif   

@@ -1,11 +1,11 @@
+//code taken from example from Elegoo Super Starter Kit for UNO V1.0.2017.7.9 PDF: Lesson 19 74HC595 And Segment Display
+
 //**Digital Display readout defines and function**//
 #ifndef DIGITAL_H
 #define DIGITAL_H
 
 #define DEBUG_DIGITAL
-//code taken from example from Elegoo Super Starter Kit for UNO V1.0.2017.7.9 PDF: Lesson 19 74HC595 And Segment Display
-// may eventually make this a class and have it be treated as an object in main code like the buttons and elevator objects
-//for now these objects and functions can be called anywhere 
+
 #define DISPLAY_CLOCK_PIN 4
 #define DISPLAY_LATCH_PIN 3
 #define DISPLAY_DATA_PIN  2
