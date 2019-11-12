@@ -75,6 +75,7 @@ class Controller
     void upDateLights();
     void upDateController();
     void turnOffDirectionLights();
+    void removeRequest(uint8_t aButtonNum);
     void addRequest(uint8_t aButtonNum);
     uint8_t checkModeRequest();
     uint8_t checkFloorRequest(uint8_t tempCurrentFloor);    
@@ -161,10 +162,12 @@ void Controller::upDateRequests()
       switch (action) 
       {
         case Up:
+          removeRequest(i);
+          Serial.println("BUTTON "+String(i+1)+" UP!");
           break;
         case Down:                           
           addRequest(i);
-          checkModeRequest();
+          //checkModeRequest();
           buttons.increaseButtonCount();
           #ifdef DEBUG_CONTROLLER           
             Serial.println("BUTTON "+String(i+1)+" Down!");
@@ -205,6 +208,8 @@ void Controller::turnOffDirectionLights()
 //becuse we dont want floor requests during that time.
 void Controller::addRequest(uint8_t aButtonNum)
 {
+  Serial.println("BUTTON "+String(aButtonNum)+" in addRequest!");
+  
   if(getControllerState()== NORMAL)
   {
     buttonQueue[aButtonNum].buttonState = true;
@@ -215,6 +220,33 @@ void Controller::addRequest(uint8_t aButtonNum)
       //floor LED start at index 1 so we have to +1
       lights.setOnLightQue(aButtonNum+1);
     }
+
+    if(buttonQueue[5].buttonState == true)
+    {
+      makeSound(SOUND_PIN, SOUND_NOTE_MODE, SOUND_DELAY);
+      setControllerState(FIRE_1);
+      resetQues();
+      elevator.setTargetFloor(FLOOR_1);
+      elevator.setState(GOING_DOWN);
+      lights.setOnLightQue(FLOOR_1);
+           
+    }
+  
+    if(buttonQueue[6].buttonState == true)
+    {
+      makeSound(SOUND_PIN, SOUND_NOTE_MODE, SOUND_DELAY);
+      setControllerState(FIRE_2);
+      resetQues();
+      //make sure elavtor is not below floor 2          
+      if(elevator.getCurrentFloor() > FLOOR_2)
+      {
+        elevator.setTargetFloor(FLOOR_2);
+        elevator.setState(GOING_DOWN);
+        lights.setOnLightQue(FLOOR_2);
+      }          
+    }
+
+    
   }
   ///we may not want user floor requests but still want mode buttons
   else 
@@ -224,6 +256,37 @@ void Controller::addRequest(uint8_t aButtonNum)
       buttonQueue[aButtonNum].buttonState = true;
     }
   }
+ 
+  
+   
+}
+
+void Controller::removeRequest(uint8_t aButtonNum)
+{
+  if(aButtonNum >= NUM_OF_FLOORS)
+    {
+      buttonQueue[aButtonNum].buttonState = false;
+    }
+
+  if(getControllerState()== FIRE_1)
+  {
+    if(buttonQueue[5].buttonState == false)
+    {
+      setControllerState(NORMAL);
+      elevator.setTargetFloor(elevator.getCurrentFloor()); 
+      lights.setOffLightQue(FLOOR_1);
+    }
+  }
+  
+  if(getControllerState() == FIRE_2)
+  {
+    if(buttonQueue[6].buttonState == false)
+    {
+      setControllerState(NORMAL);
+      elevator.setTargetFloor(elevator.getCurrentFloor());
+      lights.setOffLightQue(FLOOR_2);     
+    }
+  }    
 }
 
 //this is where non floor request buttons "Mode buttons" wil get told what to do when pressed
